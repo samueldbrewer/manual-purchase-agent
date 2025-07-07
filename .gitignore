@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.sqlite
+
+# Logs
+*.log
+flask_output.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node modules (for recording system)
+node_modules/
+npm-debug.log*
+
+# Uploads and temporary files
+uploads/
+temp/
+recordings/*.webm
+screenshots/
+
+# API keys and secrets (backup files)
+requirements.original.txt
+Dockerfile.original
+
+# Test files
+test_*.py
+*_test.py
+
+# Claude settings
+**/.claude/settings.local.json

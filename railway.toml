@@ -1,0 +1,8 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile.minimal"
+
+[deploy]
+startCommand = "python simple_app.py"
+healthcheckPath = "/health"
+restartPolicyType = "on_failure"
