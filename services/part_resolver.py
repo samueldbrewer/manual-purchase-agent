@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 try:
     # Try to import using new OpenAI Python client (v1.0.0+)
     from openai import OpenAI
-    client = OpenAI(api_key=Config.OPENAI_API_KEY)
+    client = OpenAI(api_key=Config.OPENAI_API_KEY) if Config.OPENAI_API_KEY else None
     USING_NEW_OPENAI_CLIENT = True
     logger.info("Using new OpenAI client (v1.0.0+)")
 except ImportError:

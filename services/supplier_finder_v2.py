@@ -7,7 +7,7 @@ from config import Config
 # Initialize OpenAI client
 try:
     from openai import OpenAI
-    client = OpenAI(api_key=Config.OPENAI_API_KEY)
+    client = OpenAI(api_key=Config.OPENAI_API_KEY) if Config.OPENAI_API_KEY else None
     USING_NEW_OPENAI_CLIENT = True
 except ImportError:
     import openai
