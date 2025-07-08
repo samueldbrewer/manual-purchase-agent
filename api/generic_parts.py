@@ -9,7 +9,7 @@ from typing import Dict, List, Optional
 try:
     # Try to import using new OpenAI Python client (v1.0.0+)
     from openai import OpenAI
-    openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+    openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY')) if os.getenv('OPENAI_API_KEY') else None
     USING_NEW_OPENAI_CLIENT = True
     logger = logging.getLogger(__name__)
     logger.info("Using new OpenAI client (v1.0.0+)")
