@@ -54,11 +54,35 @@ def create_app():
     # V3 mobile app route
     @app.route('/static/api-demo/v3/')
     def v3_app():
-        response = app.send_static_file('api-demo/v3/index.html')
-        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '0'
-        return response
+        try:
+            response = app.send_static_file('api-demo/v3/index.html')
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+        except:
+            return send_from_directory('static/api-demo/v3', 'index.html')
+    
+    # V4 mobile app route (latest)
+    @app.route('/static/api-demo/v4/')
+    def v4_app():
+        try:
+            response = app.send_static_file('api-demo/v4/index.html')
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+            return response
+        except:
+            return send_from_directory('static/api-demo/v4', 'index.html')
+    
+    # Serve static files for mobile apps
+    @app.route('/static/api-demo/v3/<path:filename>')
+    def v3_static(filename):
+        return send_from_directory('static/api-demo/v3', filename)
+    
+    @app.route('/static/api-demo/v4/<path:filename>')
+    def v4_static(filename):
+        return send_from_directory('static/api-demo/v4', filename)
     
     # Add no-cache headers to all responses
     @app.after_request
