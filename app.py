@@ -15,7 +15,7 @@ import os
 
 def create_app():
     """Create and configure the Flask application"""
-    app = Flask(__name__)
+    app = Flask(__name__, static_folder='static', static_url_path='/static')
     
     # Load configuration
     app.config.from_object('config.Config')
