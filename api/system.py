@@ -38,13 +38,24 @@ def health_check():
         # Determine overall status
         overall_status = "healthy" if db_status == "connected" else "unhealthy"
         
+        # Check for mobile app files
+        v3_exists = os.path.exists('static/api-demo/v3/index.html')
+        v4_exists = os.path.exists('static/api-demo/v4/index.html')
+        static_exists = os.path.exists('static')
+        
         response_data = {
             'status': overall_status,
             'timestamp': datetime.utcnow().isoformat() + 'Z',
             'service': 'manual-purchase-agent',
             'version': 'v15.6',
             'database': db_status,
-            'response_time_ms': round(response_time_ms, 2)
+            'response_time_ms': round(response_time_ms, 2),
+            'mobile_apps': {
+                'v3_available': v3_exists,
+                'v4_available': v4_exists,
+                'static_folder_exists': static_exists,
+                'working_directory': os.getcwd()
+            }
         }
         
         # Create response with no-cache headers
