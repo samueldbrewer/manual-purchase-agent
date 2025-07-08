@@ -20,6 +20,9 @@ requests==2.31.0
 openai==0.28.1
 tiktoken==0.5.1
 
+# Browser automation
+playwright==1.40.0
+
 # Security
 cryptography==41.0.4
 bcrypt==4.0.1
