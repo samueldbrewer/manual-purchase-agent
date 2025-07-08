@@ -84,6 +84,29 @@ def create_app():
     def v4_static(filename):
         return send_from_directory('static/api-demo/v4', filename)
     
+    # Debug endpoint to check file system
+    @app.route('/debug/files')
+    def debug_files():
+        import os
+        try:
+            files = []
+            if os.path.exists('static'):
+                files.append('static directory exists')
+                for root, dirs, filenames in os.walk('static'):
+                    for f in filenames[:10]:  # Limit to first 10 files
+                        files.append(os.path.join(root, f))
+            else:
+                files.append('static directory does not exist')
+            
+            return jsonify({
+                'working_dir': os.getcwd(),
+                'files': files,
+                'v3_exists': os.path.exists('static/api-demo/v3/index.html'),
+                'v4_exists': os.path.exists('static/api-demo/v4/index.html')
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)})
+    
     # Add no-cache headers to all responses
     @app.after_request
     def add_no_cache_headers(response):
