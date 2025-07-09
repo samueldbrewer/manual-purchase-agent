@@ -192,22 +192,28 @@ class AIPartsAgent {
         this.setStepLoading('part');
         this.setStepLoading('suppliers');
         
-        // Handle model enrichment as soon as it completes
+        // Handle model enrichment as soon as it completes (independent of everything else)
         modelEnrichmentPromise.then(modelInfo => {
-            console.log('✅ Model enrichment completed');
-            this.updateModelInfo(modelInfo);
-            this.setStepCompleted('model');
+            console.log('✅ Model enrichment completed (independent of parts/manuals)');
+            // Add small delay to show independence
+            setTimeout(() => {
+                this.updateModelInfo(modelInfo);
+                this.setStepCompleted('model');
+            }, Math.random() * 300); // 0-300ms random delay to show independence
         }).catch(error => {
             console.error('❌ Model enrichment failed:', error);
             this.updateModelInfo(null);
             this.setStepCompleted('model');
         });
         
-        // Handle manuals as soon as they complete
+        // Handle manuals as soon as they complete (completely independent of parts)
         manualsPromise.then(manuals => {
-            console.log('✅ Manuals search completed');
-            this.updateManuals(manuals);
-            this.setStepCompleted('manuals');
+            console.log('✅ Manuals search completed (independent of parts)');
+            // Add small delay to show independence from parts
+            setTimeout(() => {
+                this.updateManuals(manuals);
+                this.setStepCompleted('manuals');
+            }, Math.random() * 500); // 0-500ms random delay to show independence
         }).catch(error => {
             console.error('❌ Manuals search failed:', error);
             this.updateManuals([]);
@@ -1084,6 +1090,7 @@ class AIPartsAgent {
 
     // ===== UPDATE METHODS (replace loading content) =====
     updateModelInfo(modelInfo) {
+        console.log('🔧 UPDATING MODEL SECTION - INDEPENDENT OF PARTS/MANUALS!', { hasImage: !!modelInfo?.image_url });
         const section = document.getElementById('modelSection');
         const imageElement = document.getElementById('modelImage');
         const nameElement = document.getElementById('modelName');
@@ -1120,6 +1127,7 @@ class AIPartsAgent {
     }
 
     updateManuals(manuals) {
+        console.log('🔧 UPDATING MANUALS SECTION - INDEPENDENT OF PARTS!', { count: manuals.length });
         const section = document.getElementById('manualsSection');
         const grid = document.getElementById('manualsGrid');
         
@@ -1152,6 +1160,7 @@ class AIPartsAgent {
     }
 
     updatePart(partData) {
+        console.log('🔧 UPDATING PART SECTION - INDEPENDENT OF MANUALS!', { part: partData?.oem_part_number });
         const section = document.getElementById('partSection');
         const imageElement = document.getElementById('partImage');
         const numberElement = document.getElementById('partNumber');
