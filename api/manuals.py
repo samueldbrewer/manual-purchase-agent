@@ -22,6 +22,22 @@ manuals_bp = Blueprint('manuals', __name__)
 # Store manual URLs temporarily for proxy access
 manual_url_cache = {}
 
+def cleanup_expired_cache():
+    """Clean up expired cache entries"""
+    import time
+    current_time = time.time()
+    expired_keys = []
+    
+    for proxy_id, cache_entry in manual_url_cache.items():
+        if isinstance(cache_entry, dict) and current_time - cache_entry.get('timestamp', 0) > 86400:  # 24 hours
+            expired_keys.append(proxy_id)
+    
+    for key in expired_keys:
+        del manual_url_cache[key]
+    
+    if expired_keys:
+        logger.info(f"Cleaned up {len(expired_keys)} expired manual cache entries")
+
 @manuals_bp.route('/search', methods=['GET', 'POST'])
 def search_manuals():
     """Search for manuals by make, model and optional year"""
@@ -41,6 +57,9 @@ def search_manuals():
         return jsonify({'error': 'Make and model parameters are required'}), 400
     
     try:
+        # Clean up expired cache entries
+        cleanup_expired_cache()
+        
         if year:
             logger.info(f"Searching for {manual_type} manuals for {make} {model} {year}")
             results = search_manuals_service(make, model, manual_type, year)
@@ -132,9 +151,15 @@ def search_manuals():
         
         # Generate proxy URLs for PDFs to avoid ad blocker issues
         import uuid
+        import time
         for result in verified_results:
             proxy_id = str(uuid.uuid4())[:8]
-            manual_url_cache[proxy_id] = result['url']
+            # Store URL with timestamp for expiration (24 hours)
+            manual_url_cache[proxy_id] = {
+                'url': result['url'],
+                'timestamp': time.time(),
+                'title': result.get('title', 'Unknown')
+            }
             result['proxy_url'] = f"/api/manuals/proxy/{proxy_id}"
             
         return jsonify({
@@ -1130,13 +1155,50 @@ def get_components_static(manual_id):
 @manuals_bp.route('/proxy/<proxy_id>')
 def proxy_manual(proxy_id):
     """Proxy manual PDF to avoid ad blocker issues"""
-    from flask import redirect
+    from flask import redirect, Response
+    import requests
     
-    # Get the original URL
-    original_url = manual_url_cache.get(proxy_id)
-    if not original_url:
-        return jsonify({'error': 'Manual not found'}), 404
+    # Get the original URL with expiration check
+    cache_entry = manual_url_cache.get(proxy_id)
+    if not cache_entry:
+        return jsonify({'error': 'Manual not found or expired. Please refresh the search.'}), 404
     
-    # Redirect to the original URL
-    # This avoids direct linking which can be blocked
+    # Check if cache entry is expired (24 hours)
+    import time
+    if time.time() - cache_entry.get('timestamp', 0) > 86400:  # 24 hours
+        del manual_url_cache[proxy_id]
+        return jsonify({'error': 'Manual link expired. Please refresh the search.'}), 404
+    
+    original_url = cache_entry['url']
+    
+    try:
+        # For PDF files, try to serve them directly through the proxy
+        # This prevents the "broken link" issue during initial loading
+        if original_url.lower().endswith('.pdf'):
+            # Stream the PDF through our proxy
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(original_url, headers=headers, stream=True, timeout=10)
+            
+            if response.status_code == 200:
+                # Return the PDF content with proper headers
+                def generate():
+                    for chunk in response.iter_content(chunk_size=8192):
+                        yield chunk
+                
+                return Response(
+                    generate(),
+                    content_type='application/pdf',
+                    headers={
+                        'Content-Disposition': f'inline; filename="{proxy_id}.pdf"',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Pragma': 'no-cache',
+                        'Expires': '0'
+                    }
+                )
+    except Exception as e:
+        logger.warning(f"Failed to proxy PDF directly: {e}")
+    
+    # Fallback to redirect for non-PDF or if proxying fails
     return redirect(original_url, code=302)
