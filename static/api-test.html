@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Console - Manual Purchase Agent</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .header h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .controls {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        label {
+            color: #4CAF50;
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        select, button {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        select {
+            min-width: 300px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 10px 20px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .editor-section {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .editor-header {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .endpoint-info {
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        .request-editor {
+            width: 100%;
+            height: 200px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-panel {
+            background: #2d2d2d;
+            border-radius: 8px;
+            border: 1px solid #444;
+            overflow: hidden;
+        }
+
+        .result-header {
+            background: #1a1a1a;
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+        }
+
+        .log-header {
+            color: #2196F3;
+        }
+
+        .response-header {
+            color: #FF9800;
+        }
+
+        .result-content {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .log-timestamp {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .log-info {
+            color: #2196F3;
+        }
+
+        .log-success {
+            color: #4CAF50;
+        }
+
+        .log-error {
+            color: #f44336;
+        }
+
+        .response-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .status-success {
+            color: #4CAF50;
+        }
+
+        .status-error {
+            color: #f44336;
+        }
+
+        .clear-btn {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .clear-btn:hover {
+            background: #777;
+        }
+
+        @media (max-width: 768px) {
+            .results {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 API Test Console</h1>
+            <p>Test all Manual Purchase Agent API endpoints with live requests and responses</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <label for="endpoint-select">API Endpoint:</label>
+                <select id="endpoint-select">
+                    <option value="">Select an endpoint...</option>
+                    <optgroup label="System">
+                        <option value="GET:/api/system/health">System Health Check</option>
+                        <option value="POST:/api/system/clear-database">Clear Database</option>
+                    </optgroup>
+                    <optgroup label="Parts">
+                        <option value="POST:/api/parts/resolve">Resolve Part to OEM Number</option>
+                    </optgroup>
+                    <optgroup label="Suppliers">
+                        <option value="POST:/api/suppliers/search">Search Suppliers</option>
+                    </optgroup>
+                    <optgroup label="Manuals">
+                        <option value="POST:/api/manuals/search">Search Manuals</option>
+                        <option value="GET:/api/manuals">Get All Manuals</option>
+                    </optgroup>
+                    <optgroup label="Enrichment">
+                        <option value="POST:/api/enrichment/equipment">Enrich Equipment Data</option>
+                        <option value="POST:/api/enrichment/part">Enrich Part Data</option>
+                    </optgroup>
+                    <optgroup label="Profiles">
+                        <option value="GET:/api/profiles">Get Billing Profiles</option>
+                        <option value="POST:/api/profiles">Create Billing Profile</option>
+                    </optgroup>
+                    <optgroup label="Purchases">
+                        <option value="POST:/api/purchases">Create Purchase</option>
+                        <option value="GET:/api/purchases">Get Purchases</option>
+                        <option value="GET:/api/purchases/available-recordings">Available Recordings</option>
+                    </optgroup>
+                    <optgroup label="Screenshots">
+                        <option value="POST:/api/screenshots/supplier">Capture Supplier Screenshot</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="control-row">
+                <button id="execute-btn" disabled>Execute Request</button>
+                <button id="clear-logs-btn" class="clear-btn">Clear Logs</button>
+            </div>
+        </div>
+
+        <div class="editor-section">
+            <div class="editor-header">
+                <span>Request Editor</span>
+                <span class="endpoint-info" id="endpoint-info">Select an endpoint to see the request format</span>
+            </div>
+            <textarea id="request-editor" class="request-editor" placeholder="Select an endpoint to load a sample request..."></textarea>
+        </div>
+
+        <div class="results">
+            <div class="result-panel">
+                <div class="result-header log-header">
+                    🗂️ Request Log
+                    <button class="clear-btn" onclick="clearLogs()">Clear</button>
+                </div>
+                <div class="result-content" id="log-content">
+                    <div class="log-entry log-info">
+                        <div class="log-timestamp">Ready to test API endpoints</div>
+                        <div>Select an endpoint and click Execute to start testing</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-panel">
+                <div class="result-header response-header">
+                    📊 Response Data
+                    <button class="clear-btn" onclick="clearResponse()">Clear</button>
+                </div>
+                <div class="result-content" id="response-content">
+                    <div style="color: #888; font-style: italic;">Response data will appear here...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const endpointTemplates = {
+            'GET:/api/system/health': {
+                method: 'GET',
+                url: '/api/system/health',
+                body: null,
+                description: 'Check system health and status'
+            },
+            'POST:/api/system/clear-database': {
+                method: 'POST',
+                url: '/api/system/clear-database',
+                body: null,
+                description: 'Clear all database records (demo/testing)'
+            },
+            'POST:/api/parts/resolve': {
+                method: 'POST',
+                url: '/api/parts/resolve',
+                body: {
+                    "description": "Bowl Lift Motor",
+                    "make": "Hobart",
+                    "model": "HL600",
+                    "use_database": true,
+                    "use_manual_search": true,
+                    "use_web_search": true,
+                    "save_results": true
+                },
+                description: 'Resolve generic part description to OEM part number'
+            },
+            'POST:/api/suppliers/search': {
+                method: 'POST',
+                url: '/api/suppliers/search',
+                body: {
+                    "part_number": "00-917676",
+                    "make": "Hobart",
+                    "model": "HL600",
+                    "oem_only": false,
+                    "use_v2": true
+                },
+                description: 'Search for suppliers offering a specific part'
+            },
+            'POST:/api/manuals/search': {
+                method: 'POST',
+                url: '/api/manuals/search',
+                body: {
+                    "make": "Hobart",
+                    "model": "HL600",
+                    "manual_type": "technical"
+                },
+                description: 'Search for equipment manuals'
+            },
+            'GET:/api/manuals': {
+                method: 'GET',
+                url: '/api/manuals?page=1&per_page=10',
+                body: null,
+                description: 'Get all manuals with pagination'
+            },
+            'POST:/api/enrichment/equipment': {
+                method: 'POST',
+                url: '/api/enrichment/equipment',
+                body: {
+                    "make": "Hobart",
+                    "model": "HL600",
+                    "year": "2020"
+                },
+                description: 'Enrich equipment data with images and details'
+            },
+            'POST:/api/enrichment/part': {
+                method: 'POST',
+                url: '/api/enrichment/part',
+                body: {
+                    "part_number": "00-917676",
+                    "description": "Bowl Lift Motor",
+                    "make": "Hobart"
+                },
+                description: 'Enrich part data with images and details'
+            },
+            'GET:/api/profiles': {
+                method: 'GET',
+                url: '/api/profiles',
+                body: null,
+                description: 'Get all billing profiles'
+            },
+            'POST:/api/profiles': {
+                method: 'POST',
+                url: '/api/profiles',
+                body: {
+                    "name": "Test Profile",
+                    "first_name": "John",
+                    "last_name": "Doe",
+                    "email": "john@example.com",
+                    "phone": "555-123-4567",
+                    "address": "123 Main St",
+                    "city": "City",
+                    "state": "CA",
+                    "zip_code": "90210"
+                },
+                description: 'Create a new billing profile'
+            },
+            'POST:/api/purchases': {
+                method: 'POST',
+                url: '/api/purchases',
+                body: {
+                    "part_number": "00-917676",
+                    "supplier_url": "https://www.partstown.com/product-url",
+                    "billing_profile_id": 1,
+                    "quantity": 1
+                },
+                description: 'Create automated purchase (requires Node.js)'
+            },
+            'GET:/api/purchases': {
+                method: 'GET',
+                url: '/api/purchases?page=1&per_page=10',
+                body: null,
+                description: 'Get all purchases with pagination'
+            },
+            'GET:/api/purchases/available-recordings': {
+                method: 'GET',
+                url: '/api/purchases/available-recordings',
+                body: null,
+                description: 'Get available purchase recordings'
+            },
+            'POST:/api/screenshots/supplier': {
+                method: 'POST',
+                url: '/api/screenshots/supplier',
+                body: {
+                    "urls": ["https://www.partstown.com/hobart/hob00-917676"]
+                },
+                description: 'Capture screenshots of supplier pages'
+            }
+        };
+
+        const endpointSelect = document.getElementById('endpoint-select');
+        const requestEditor = document.getElementById('request-editor');
+        const endpointInfo = document.getElementById('endpoint-info');
+        const executeBtn = document.getElementById('execute-btn');
+        const logContent = document.getElementById('log-content');
+        const responseContent = document.getElementById('response-content');
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div class="log-timestamp">${timestamp}</div>
+                <div class="log-${type}">${message}</div>
+            `;
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function clearLogs() {
+            logContent.innerHTML = '<div class="log-entry log-info"><div class="log-timestamp">Logs cleared</div><div>Ready for new requests</div></div>';
+        }
+
+        function clearResponse() {
+            responseContent.innerHTML = '<div style="color: #888; font-style: italic;">Response data will appear here...</div>';
+        }
+
+        endpointSelect.addEventListener('change', function() {
+            const selectedEndpoint = this.value;
+            if (selectedEndpoint && endpointTemplates[selectedEndpoint]) {
+                const template = endpointTemplates[selectedEndpoint];
+                
+                // Update endpoint info
+                endpointInfo.textContent = `${template.method} ${template.url} - ${template.description}`;
+                
+                // Build request text
+                let requestText = `Method: ${template.method}\nURL: ${template.url}\n`;
+                
+                if (template.body) {
+                    requestText += `\nRequest Body:\n${JSON.stringify(template.body, null, 2)}`;
+                } else {
+                    requestText += '\nNo request body required';
+                }
+                
+                requestEditor.value = requestText;
+                executeBtn.disabled = false;
+                
+                addLog(`Loaded template for ${selectedEndpoint}`, 'info');
+            } else {
+                endpointInfo.textContent = 'Select an endpoint to see the request format';
+                requestEditor.value = '';
+                executeBtn.disabled = true;
+            }
+        });
+
+        executeBtn.addEventListener('click', async function() {
+            const selectedEndpoint = endpointSelect.value;
+            if (!selectedEndpoint || !endpointTemplates[selectedEndpoint]) {
+                addLog('No endpoint selected', 'error');
+                return;
+            }
+
+            const template = endpointTemplates[selectedEndpoint];
+            
+            // Parse custom request from editor
+            const editorContent = requestEditor.value;
+            const lines = editorContent.split('\n');
+            
+            let method = template.method;
+            let url = template.url;
+            let body = template.body;
+            
+            // Parse editor content for custom modifications
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('Method:')) {
+                    method = line.split(':')[1].trim();
+                } else if (line.startsWith('URL:')) {
+                    url = line.split(':')[1].trim();
+                } else if (line === 'Request Body:' && i + 1 < lines.length) {
+                    try {
+                        const bodyText = lines.slice(i + 1).join('\n');
+                        if (bodyText.trim() && bodyText.trim() !== 'No request body required') {
+                            body = JSON.parse(bodyText);
+                        }
+                    } catch (e) {
+                        addLog(`Invalid JSON in request body: ${e.message}`, 'error');
+                        return;
+                    }
+                    break;
+                }
+            }
+
+            addLog(`🚀 Executing ${method} ${url}`, 'info');
+            
+            if (body) {
+                addLog(`📤 Request body: ${JSON.stringify(body)}`, 'info');
+            }
+
+            executeBtn.disabled = true;
+            executeBtn.textContent = 'Executing...';
+
+            try {
+                const startTime = performance.now();
+                
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (body && method !== 'GET') {
+                    options.body = JSON.stringify(body);
+                }
+
+                const response = await fetch(url, options);
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                const responseData = await response.text();
+                let formattedResponse;
+                
+                try {
+                    const jsonData = JSON.parse(responseData);
+                    formattedResponse = JSON.stringify(jsonData, null, 2);
+                } catch (e) {
+                    formattedResponse = responseData;
+                }
+
+                if (response.ok) {
+                    addLog(`✅ Success (${response.status}) - ${duration}ms`, 'success');
+                } else {
+                    addLog(`❌ Error (${response.status}) - ${duration}ms`, 'error');
+                }
+
+                // Display response
+                responseContent.innerHTML = `<div class="status-${response.ok ? 'success' : 'error'}">
+                    Status: ${response.status} ${response.statusText} (${duration}ms)
+                </div>
+                <div class="response-content">${formattedResponse}</div>`;
+
+                addLog(`📥 Response received (${formattedResponse.length} chars)`, response.ok ? 'success' : 'error');
+
+            } catch (error) {
+                addLog(`💥 Request failed: ${error.message}`, 'error');
+                responseContent.innerHTML = `<div class="status-error">Error: ${error.message}</div>`;
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.textContent = 'Execute Request';
+            }
+        });
+
+        // Initial setup
+        addLog('API Test Console initialized', 'success');
+        addLog('Select an endpoint from the dropdown to begin testing', 'info');
+    </script>
+</body>
+</html>

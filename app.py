@@ -45,6 +45,11 @@ def create_app():
     def health():
         return jsonify({"status": "healthy", "version": "v15.6"})
     
+    # API Test Console
+    @app.route('/api-test')
+    def api_test():
+        return send_from_directory('static', 'api-test.html')
+    
     # Static file serving for V4 interface
     @app.route('/v4/<path:filename>')
     def v4_static(filename):
