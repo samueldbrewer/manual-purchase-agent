@@ -12,11 +12,19 @@ class SupplierFinder:
     def __init__(self, serpapi_key=None):
         self.serpapi_key = serpapi_key or os.environ.get('SERPAPI_KEY')
         if not self.serpapi_key:
-            raise ValueError("SERPAPI_KEY is required")
+            logger.warning("SERPAPI_KEY not configured - supplier search will return empty results")
     
     def find_suppliers(self, part_number, part_description=""):
         """Find suppliers for a given part number."""
         try:
+            if not self.serpapi_key:
+                return {
+                    "success": False,
+                    "error": "SERPAPI_KEY not configured",
+                    "suppliers": [],
+                    "count": 0
+                }
+            
             query = f"{part_number} {part_description} buy online parts supplier"
             
             search = GoogleSearch({
@@ -102,3 +110,48 @@ class SupplierFinder:
             score += 0.1
         
         return min(score, 1.0)  # Cap at 1.0
+
+# Standalone function wrapper for backwards compatibility
+def find_suppliers(part_number, part_description="", make=None, model=None, oem_only=False, use_v2=True):
+    """Standalone function wrapper for supplier search."""
+    try:
+        finder = SupplierFinder()
+        
+        # Build search description
+        search_description = part_description
+        if make:
+            search_description = f"{make} {search_description}"
+        if model:
+            search_description = f"{search_description} {model}"
+        if oem_only:
+            search_description = f"OEM {search_description}"
+        
+        result = finder.find_suppliers(part_number, search_description)
+        
+        # Convert to expected API format
+        if result['success']:
+            return {
+                'success': True,
+                'suppliers': result['suppliers'],
+                'count': result['count'],
+                'part_number': part_number,
+                'search_query': f"{part_number} {search_description}".strip()
+            }
+        else:
+            return {
+                'success': False,
+                'error': result.get('error', 'Supplier search failed'),
+                'suppliers': [],
+                'count': 0,
+                'part_number': part_number
+            }
+    
+    except Exception as e:
+        logger.error(f"Error in find_suppliers: {e}")
+        return {
+            'success': False,
+            'error': str(e),
+            'suppliers': [],
+            'count': 0,
+            'part_number': part_number
+        }
