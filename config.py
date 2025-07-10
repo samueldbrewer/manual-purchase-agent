@@ -1,27 +1,32 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 class Config:
-    """Application configuration"""
+    """Configuration settings for the Flask application"""
     
     # Flask settings
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'development-key')
-    DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     
     # Database settings
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///app.db')
+    DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///instance/app.db')
+    SQLALCHEMY_DATABASE_URI = DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # API keys - must be set via environment variables
+    # API Keys
     SERPAPI_KEY = os.environ.get('SERPAPI_KEY')
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     
-    # Encryption key for sensitive data
+    # Encryption
     ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY')
     
-    # File storage settings
-    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'uploads')
-    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50 MB
+    # Purchase settings
+    ENABLE_REAL_PURCHASES = os.environ.get('ENABLE_REAL_PURCHASES', 'false').lower() == 'true'
+    
+    # Upload settings
+    UPLOAD_FOLDER = 'uploads'
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    
+    # Static file settings
+    SEND_FILE_MAX_AGE_DEFAULT = 0

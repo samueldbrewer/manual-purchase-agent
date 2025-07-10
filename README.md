@@ -1,174 +1,124 @@
-# Manual Purchase Agent - Enterprise API Edition (v4.0.0)
+# PartsPro - Minimal Railway Deployment
 
-A comprehensive Flask microservice that combines AI, web scraping, and browser automation to find technical manuals, extract part information, and autonomously purchase parts online. This Enterprise API Edition includes a powerful web UI and enhanced API functionality with comprehensive documentation and testing tools.
+## Overview
 
-## Features
+This is a simplified version of the PartsPro application designed for Railway deployment. It includes:
 
-- **Enhanced API**: Flexible endpoints supporting both GET and POST methods for all operations
-- **API Documentation**: Comprehensive reference with examples for all endpoints
-- **API Testing Tools**: Ready-made scripts for testing all API functionality
-- **Real-time Integration**: Full support for external APIs without prefetched data
-- **Intuitive Web UI**: Interactive dashboard and visualization for all components
-- **Manual Management**: Find, download, and process technical and parts manuals
-- **Part Identification**: Extract and resolve parts with AI-powered processing
-- **Supplier Integration**: Find and compare suppliers for any part
-- **Automated Purchasing**: Advanced browser automation using playwright-recorder service
-- **Recording & Replay**: Record purchase flows once, replay with different products
-- **Enterprise Demo Mode**: Showcase all features in a safe, simulated environment
-- **Security Controls**: Environment-based configuration for real vs simulated purchases
+1. **Complete API Suite** - All working endpoints for parts, manuals, suppliers, etc.
+2. **Mobile V4 Interface** - Clean, responsive web interface
+3. **Minimal Dependencies** - Removed recording system and unnecessary components
 
-## System Architecture
+## What Was Removed
 
-This application is built using the following technologies:
-- **Backend**: Flask, SQLAlchemy, SerpAPI, OpenAI
-- **Purchase Automation**: Node.js playwright-recorder service
-- **Frontend**: Bootstrap 5, Vue.js, Chart.js
-- **Database**: PostgreSQL
-- **Infrastructure**: Docker, Gunicorn, Docker Compose
+### Recording System (Complete Removal)
+- `recording_system/` directory
+- `recordings/` directory  
+- `api/recording_studio_api.py`
+- All purchase automation functionality
 
-## Installation
+### Interfaces (Simplified)
+- V3 interface (`static/api-demo/v3/`)
+- V2 interface (`static/api-demo/v2/`)
+- Old main interface files
+- Templates and web UI routes
 
-### Prerequisites
+### Documentation & Backup Files
+- Multiple markdown documentation files
+- Archive directories and backups
+- Multiple Dockerfile variants
+- Deployment scripts
 
-- Docker and Docker Compose
-- Python 3.11 or higher (for local development)
-- SerpAPI and OpenAI API keys
+### Data & Test Files
+- Large CSV data files
+- Log files
+- Screenshot directories
+- Most test files
 
-### Setup with Docker (Recommended)
+## Current Structure
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/manual-purchase-agent.git
-cd manual-purchase-agent
+```
+/
+├── api/                    # API endpoints
+├── models/                 # Database models
+├── services/              # Core services (recreated)
+├── static/api-demo/v4/    # Mobile V4 interface
+├── scripts/               # Utility scripts
+├── utils/                 # Helper utilities
+├── app.py                 # Main Flask application
+├── config.py              # Configuration
+├── requirements.txt       # Minimal dependencies
+├── Dockerfile             # Railway deployment
+└── README.md              # This file
 ```
 
-2. Use the provided `.env` file or edit it with your own API keys and credentials.
+## API Endpoints
 
-3. Important environment variables:
-   - `SERPAPI_KEY`: Your SerpAPI key for manual searching
-   - `OPENAI_API_KEY`: Your OpenAI API key for text extraction
-   - `ENCRYPTION_KEY`: Base64-encoded Fernet key for encrypting sensitive data
-   - `ENABLE_REAL_PURCHASES`: Set to "true" to enable actual purchase execution (default: false)
+The following API endpoints are available:
 
-   Note: To generate a proper Fernet key, run:
-   ```bash
-   python generate_key.py
-   ```
+- `/api/manuals/*` - Manual search and processing
+- `/api/parts/*` - Part resolution and management  
+- `/api/suppliers/*` - Supplier search
+- `/api/profiles/*` - Billing profile management
+- `/api/enrichment/*` - Data enrichment
+- `/api/screenshots/*` - Website screenshots
+- `/api/system/*` - System health and status
 
-4. Build and start the Docker containers:
-```bash
-docker-compose up -d
+## Environment Variables
+
+Required for Railway deployment:
+
+```env
+SERPAPI_KEY=your_serpapi_key
+OPENAI_API_KEY=your_openai_key
+SECRET_KEY=your_secret_key
+ENCRYPTION_KEY=your_encryption_key
+DATABASE_URI=postgresql://user:pass@host:port/db
 ```
 
-The application will be available at:
-- Main application: `http://localhost:7777`
-- Playwright-recorder API: `http://localhost:3001`
+## Railway Deployment
 
-### Local Development Setup
+1. **Connect Repository** to Railway
+2. **Set Environment Variables** in Railway dashboard
+3. **Deploy** - Railway will automatically use the Dockerfile
 
-1. Create a virtual environment:
+The application will be available at the Railway-provided URL.
+
+## Local Development
+
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-2. Install dependencies:
-```bash
+# Install dependencies
 pip install -r requirements.txt
-```
 
-3. Install Playwright browsers (required for purchase automation):
-```bash
-playwright install chromium
-```
+# Set environment variables
+export FLASK_APP=app.py
+export FLASK_ENV=development
 
-4. Use the provided `.env` file or edit it with your own credentials.
+# Initialize database
+python scripts/init_db.py
 
-5. Run the Flask application:
-```bash
-export PYTHONPATH=$PWD  # Set Python path to current directory
+# Run application
 flask run --host=0.0.0.0 --port=7777
 ```
 
-6. In a separate terminal, run the playwright-recorder service:
-```bash
-cd "Purchasing Agent Focus server backup/playwright-recorder"
-npm install
-npx playwright install chromium
-PORT=3001 npm run start:api
-```
+## Key Features Retained
 
-## Web UI Overview
+- **Real API Functionality** - All endpoints work with actual data
+- **Mobile V4 Interface** - Full-featured responsive UI
+- **PDF Processing** - Manual parsing with GPT-4.1-Nano
+- **Part Resolution** - OEM part number resolution
+- **Supplier Search** - AI-powered supplier ranking
+- **Data Enrichment** - Enhanced part information
 
-The Manual Purchase Agent Enterprise Edition includes a comprehensive web interface with the following sections:
+## Size Reduction
 
-### Dashboard
-- Real-time statistics and monitoring
-- System activity visualization
-- Recent operations tracking
+- **From**: ~40,000+ files with recording system
+- **To**: ~480 files (excluding venv)
+- **Size**: ~850KB core application (excluding dependencies)
 
-### Manuals Section
-- Search and download technical manuals
-- Process manuals to extract information
-- Browse extracted parts and error codes
+## Notes
 
-### Parts Section
-- View and manage identified parts
-- Resolve generic part descriptions
-- View part relationships and alternatives
-
-### Suppliers Section
-- Search and manage suppliers
-- Compare prices and availability
-- Track supplier reliability
-
-### Purchases Section
-- View purchase history
-- Track purchase status
-- Monitor automated purchase workflows
-
-### Demo Mode
-- Enterprise demonstration with simulated workflows
-- Step-by-step visualization of the entire process
-- Interactive controls for presentations
-
-## REST API
-
-The application provides a comprehensive REST API for integration with other systems. 
-
-### API Documentation
-
-Detailed API documentation is available in the [API_REFERENCE.md](API_REFERENCE.md) file, which includes:
-- Complete endpoint descriptions for all resources
-- Required and optional parameters for each endpoint
-- Example curl commands for testing each endpoint
-- Expected response formats
-
-### API Testing
-
-Two testing scripts are included for verifying API functionality:
-- `test_api.sh`: Tests basic API functionality
-- `test_all_api.sh`: Comprehensive tests for all API endpoints
-
-To run the API tests:
-```bash
-# Make sure the scripts are executable
-chmod +x test_api.sh test_all_api.sh
-
-# Run basic API tests
-./test_api.sh
-
-# Run comprehensive API tests
-./test_all_api.sh
-```
-
-## Security Considerations
-
-- Sensitive payment and billing information is encrypted in the database
-- API keys are secured and never exposed in the frontend
-- Authentication and authorization controls for enterprise deployment
-- In production, always use HTTPS and proper authentication
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.# Force Railway redeploy with new API keys
+- Purchase automation functionality removed
+- Recording system completely removed
+- All API endpoints maintained and functional
+- Mobile V4 interface cleaned and optimized
+- Ready for Railway deployment with minimal footprint
