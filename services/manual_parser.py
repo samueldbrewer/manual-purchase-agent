@@ -147,3 +147,195 @@ class ManualParser:
                 "part_numbers": "",
                 "raw_text": ""
             }
+
+# Standalone function wrappers for backwards compatibility
+def extract_text_from_pdf(pdf_path):
+    """Standalone function wrapper for text extraction."""
+    parser = ManualParser()
+    result = parser.extract_text_from_pdf(pdf_path)
+    
+    if result['success']:
+        return result['text']
+    else:
+        raise Exception(result['error'])
+
+def extract_information(text, manual_id=None):
+    """Extract comprehensive information from manual text using GPT-4.1-Nano."""
+    try:
+        from openai import OpenAI
+        import json
+        import re
+        
+        # Initialize OpenAI client
+        openai_api_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_api_key:
+            logger.error("OpenAI API key not configured")
+            return {
+                'error_codes': [],
+                'part_numbers': [],
+                'manual_subject': 'Unknown',
+                'common_problems': [],
+                'maintenance_procedures': [],
+                'safety_warnings': []
+            }
+        
+        client = OpenAI(api_key=openai_api_key)
+        
+        # Limit text to prevent token overflow
+        max_text_length = 100000  # ~25K tokens for GPT-4.1-Nano
+        if len(text) > max_text_length:
+            text = text[:max_text_length]
+            logger.info(f"Text truncated to {max_text_length} characters for processing")
+        
+        prompt = f"""
+        Analyze this technical manual and extract the following information in JSON format:
+
+        1. Error codes with descriptions (format: "Error Code Number", "Short Error Description")
+        2. OEM part numbers with descriptions (format: "OEM Part Number", "Short Part Description")
+        3. Manual subject/equipment type
+        4. Common problems mentioned
+        5. Maintenance procedures
+        6. Safety warnings
+
+        Return a JSON object with this structure:
+        {{
+            "manual_subject": "Equipment Name/Type",
+            "error_codes": [
+                {{"code": "E01", "description": "Temperature sensor failure"}},
+                {{"code": "F23", "description": "Water pump malfunction"}}
+            ],
+            "part_numbers": [
+                {{"code": "HC21ZE038", "description": "Compressor Motor"}},
+                {{"code": "58STA090", "description": "Thermostat Assembly"}}
+            ],
+            "common_problems": [
+                {{"issue": "Unit not cooling", "cause": "Low refrigerant", "solution": "Check for leaks"}},
+                {{"issue": "Excessive noise", "cause": "Loose components", "solution": "Tighten mounting bolts"}}
+            ],
+            "maintenance_procedures": [
+                "Clean condenser coils monthly",
+                "Replace air filter every 3 months",
+                "Check refrigerant levels annually"
+            ],
+            "safety_warnings": [
+                "Disconnect power before servicing",
+                "Use proper PPE when handling refrigerants",
+                "Never bypass safety controls"
+            ]
+        }}
+
+        Manual text to analyze:
+        {text}
+        """
+        
+        logger.info(f"Processing manual{'ID ' + str(manual_id) if manual_id else ''} with GPT-4.1-Nano")
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # Using available model
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=4000,
+            temperature=0.1
+        )
+        
+        # Parse the JSON response
+        content = response.choices[0].message.content
+        
+        # Extract JSON from response (handle cases where model adds extra text)
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            extracted_info = json.loads(json_str)
+        else:
+            # Fallback parsing
+            extracted_info = json.loads(content)
+        
+        # Ensure all required fields exist
+        extracted_info.setdefault('error_codes', [])
+        extracted_info.setdefault('part_numbers', [])
+        extracted_info.setdefault('manual_subject', 'Unknown')
+        extracted_info.setdefault('common_problems', [])
+        extracted_info.setdefault('maintenance_procedures', [])
+        extracted_info.setdefault('safety_warnings', [])
+        
+        logger.info(f"Extracted {len(extracted_info['error_codes'])} error codes and {len(extracted_info['part_numbers'])} part numbers")
+        
+        return extracted_info
+        
+    except Exception as e:
+        logger.error(f"Error extracting information: {e}")
+        return {
+            'error_codes': [],
+            'part_numbers': [],
+            'manual_subject': 'Unknown',
+            'common_problems': [],
+            'maintenance_procedures': [],
+            'safety_warnings': []
+        }
+
+def extract_components(text, custom_prompt=None):
+    """Extract structural components from manual text."""
+    try:
+        from openai import OpenAI
+        import json
+        import re
+        
+        # Initialize OpenAI client
+        openai_api_key = os.environ.get('OPENAI_API_KEY')
+        if not openai_api_key:
+            logger.error("OpenAI API key not configured")
+            return {}
+        
+        client = OpenAI(api_key=openai_api_key)
+        
+        # Use custom prompt if provided, otherwise use default
+        if custom_prompt:
+            prompt = f"{custom_prompt}\n\nManual text:\n{text[:50000]}"
+        else:
+            prompt = f"""
+            Analyze this technical manual and identify key structural components with page ranges.
+            
+            Return a JSON object with components like:
+            {{
+                "table_of_contents": {{
+                    "title": "Table of Contents",
+                    "start_page": 1,
+                    "end_page": 2,
+                    "description": "Lists all sections with page numbers",
+                    "key_information": ["Section names", "Page numbers", "Subsections"]
+                }},
+                "exploded_view": {{
+                    "title": "Parts Breakdown Diagram", 
+                    "start_page": 14,
+                    "end_page": 18,
+                    "description": "Detailed exploded view diagrams",
+                    "key_information": ["Part locations", "Assembly relationships", "Part numbers"]
+                }}
+            }}
+            
+            Manual text:
+            {text[:50000]}
+            """
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=2000,
+            temperature=0.1
+        )
+        
+        # Parse the JSON response
+        content = response.choices[0].message.content
+        
+        # Extract JSON from response
+        json_match = re.search(r'\{.*\}', content, re.DOTALL)
+        if json_match:
+            json_str = json_match.group(0)
+            components = json.loads(json_str)
+        else:
+            components = json.loads(content)
+        
+        return components
+        
+    except Exception as e:
+        logger.error(f"Error extracting components: {e}")
+        return {}
