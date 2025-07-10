@@ -78,3 +78,59 @@ class ManualFinder:
                 "success": False,
                 "error": str(e)
             }
+
+# Standalone function wrappers for backwards compatibility
+def search_manuals(make, model, manual_type="technical manual", year=None):
+    """Standalone function wrapper for manual search."""
+    finder = ManualFinder()
+    result = finder.search_manuals(make, model, manual_type)
+    
+    # Convert to expected format for the API
+    if result['success']:
+        return result['manuals']
+    else:
+        logger.error(f"Search failed: {result['error']}")
+        return []
+
+def download_manual(url, filename=None):
+    """Standalone function wrapper for manual download."""
+    finder = ManualFinder()
+    result = finder.download_manual(url, filename)
+    
+    if result['success']:
+        return result['filename']
+    else:
+        raise Exception(result['error'])
+
+def verify_manual_contains_model(file_path, model):
+    """Verify if a manual contains references to a specific model."""
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(file_path)
+        
+        # Search first few pages for model references
+        for page_num in range(min(5, len(doc))):
+            page = doc[page_num]
+            text = page.get_text().lower()
+            
+            if model.lower() in text:
+                doc.close()
+                return True
+        
+        doc.close()
+        return False
+    except Exception as e:
+        logger.error(f"Error verifying model in manual: {e}")
+        return True  # Default to include if can't verify
+
+def get_pdf_page_count(file_path):
+    """Get the number of pages in a PDF file."""
+    try:
+        import fitz  # PyMuPDF
+        doc = fitz.open(file_path)
+        page_count = len(doc)
+        doc.close()
+        return page_count
+    except Exception as e:
+        logger.error(f"Error getting PDF page count: {e}")
+        return None
