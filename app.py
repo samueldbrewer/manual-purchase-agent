@@ -24,14 +24,15 @@ def create_app():
     # Initialize database
     db.init_app(app)
     
-    # Create tables if they don't exist (for Railway PostgreSQL)
+    # Create tables if they don't exist (Railway PostgreSQL or local SQLite)
     with app.app_context():
         try:
             db.create_all()
             print("Database tables created successfully")
         except Exception as e:
             print(f"Database table creation failed: {e}")
-            # Continue anyway - tables might already exist
+            print("Will retry table creation on first request")
+            # Continue anyway - tables might already exist or database might not be ready yet
     
     # Register API blueprints
     app.register_blueprint(manuals_bp, url_prefix='/api/manuals')

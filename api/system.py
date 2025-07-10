@@ -22,15 +22,24 @@ def health_check():
     start_time = time.time()
     
     try:
-        # Test database connectivity
+        # Test database connectivity and ensure tables exist
         db_status = "connected"
         try:
+            # Try to ensure tables exist
+            db.create_all()
+            
             # Simple query to test database connection
             db.session.execute(text('SELECT 1'))
             db.session.commit()
         except Exception as e:
             db_status = f"error: {str(e)}"
             logger.error(f"Database health check failed: {e}")
+            # Try to create tables if they don't exist
+            try:
+                db.create_all()
+                db_status = "connected (tables created)"
+            except Exception as create_error:
+                logger.error(f"Failed to create tables: {create_error}")
         
         # Calculate response time
         response_time_ms = (time.time() - start_time) * 1000
