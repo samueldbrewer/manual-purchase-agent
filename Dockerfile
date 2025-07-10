@@ -24,8 +24,8 @@ ENV PYTHONPATH=/app
 # Create necessary directories
 RUN mkdir -p instance
 
-# Initialize database
-RUN python scripts/init_db.py || echo "Database initialization skipped"
+# Initialize database (only for SQLite, PostgreSQL will be handled at runtime)
+RUN python scripts/init_db.py || echo "Database initialization skipped - will initialize at runtime"
 
 # Use Railway's PORT environment variable
 EXPOSE $PORT

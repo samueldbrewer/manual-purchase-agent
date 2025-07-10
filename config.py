@@ -9,10 +9,14 @@ class Config:
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     
-    # Database settings
-    DATABASE_URI = os.environ.get('DATABASE_URI', 'sqlite:///instance/app.db')
+    # Database settings - Railway provides DATABASE_URL, fallback to SQLite for local dev
+    DATABASE_URI = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI', 'sqlite:///instance/app.db')
     SQLALCHEMY_DATABASE_URI = DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
     
     # API Keys
     SERPAPI_KEY = os.environ.get('SERPAPI_KEY')

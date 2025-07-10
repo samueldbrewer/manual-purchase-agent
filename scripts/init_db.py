@@ -34,20 +34,33 @@ def init_db():
     """Initialize the database with all required tables"""
     app = create_app()
     
-    # Check if the database file exists, and remove it if it does
-    db_path = 'instance/app.db'
-    if os.path.exists(db_path):
-        logger.info(f"Removing existing database at {db_path}")
-        os.remove(db_path)
+    # Get database URI to check if it's SQLite or PostgreSQL
+    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
     
-    # Ensure the instance directory exists
-    os.makedirs('instance', exist_ok=True)
+    if db_uri.startswith('sqlite'):
+        # For SQLite, handle file creation
+        db_path = 'instance/app.db'
+        if os.path.exists(db_path):
+            logger.info(f"Removing existing database at {db_path}")
+            os.remove(db_path)
+        
+        # Ensure the instance directory exists
+        os.makedirs('instance', exist_ok=True)
+    else:
+        # For PostgreSQL (Railway), don't try to delete anything
+        logger.info("Using external database (PostgreSQL)")
     
-    # Create the database
+    # Create the database tables
     with app.app_context():
-        logger.info("Creating new database with all tables")
-        db.create_all()
-        logger.info("Database initialization complete")
+        try:
+            logger.info("Creating database tables")
+            db.create_all()
+            logger.info("Database initialization complete")
+        except Exception as e:
+            logger.error(f"Database initialization failed: {e}")
+            # Don't raise the exception in Railway - tables might already exist
+            if not db_uri.startswith('postgres'):
+                raise
 
 if __name__ == '__main__':
     init_db()
