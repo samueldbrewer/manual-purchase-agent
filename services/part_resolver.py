@@ -1,7 +1,6 @@
 """Part resolver service for finding OEM part numbers."""
 
 import os
-import openai
 from serpapi import GoogleSearch
 import logging
 
@@ -13,9 +12,6 @@ class PartResolver:
     def __init__(self, serpapi_key=None, openai_api_key=None):
         self.serpapi_key = serpapi_key or os.environ.get('SERPAPI_KEY')
         self.openai_api_key = openai_api_key or os.environ.get('OPENAI_API_KEY')
-        
-        if self.openai_api_key:
-            openai.api_key = self.openai_api_key
     
     def resolve_part(self, description, make, model):
         """Resolve a part description to OEM part number."""
@@ -88,6 +84,9 @@ class PartResolver:
             if not self.openai_api_key:
                 return {"error": "OpenAI API key not configured"}
             
+            from openai import OpenAI
+            client = OpenAI(api_key=self.openai_api_key)
+            
             prompt = f"""
             For a {make} {model}, find the OEM part number for: {description}
             
@@ -98,8 +97,8 @@ class PartResolver:
             "UNKNOWN", "Cannot determine exact OEM part number"
             """
             
-            response = openai.ChatCompletion.create(
-                model="gpt-4",
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=100
             )
@@ -162,3 +161,55 @@ class PartResolver:
                 "description": "Could not resolve part number",
                 "confidence": 0.0
             }
+
+# Standalone function wrapper for backwards compatibility
+def resolve_part_name(description, make=None, model=None, use_database=True, use_manual_search=True, use_web_search=True, save_results=True):
+    """Standalone function wrapper for part resolution."""
+    try:
+        resolver = PartResolver()
+        
+        # If make and model are provided, use them
+        if make and model:
+            result = resolver.resolve_part(description, make, model)
+        else:
+            # Try to resolve without make/model
+            result = resolver.resolve_part(description, "Generic", "Equipment")
+        
+        # Convert to expected API format
+        if result['success'] and result.get('recommended_result'):
+            recommended = result['recommended_result']
+            return {
+                'success': True,
+                'recommended_result': {
+                    'oem_part_number': recommended.get('oem_part_number', 'NOT_FOUND'),
+                    'description': recommended.get('description', description),
+                    'confidence': recommended.get('confidence', 0.0),
+                    'selection_metadata': {
+                        'selected_from': 'part_resolver',
+                        'composite_score': recommended.get('confidence', 0.0)
+                    }
+                },
+                'results': result.get('results', {})
+            }
+        else:
+            return {
+                'success': False,
+                'error': result.get('error', 'Part resolution failed'),
+                'recommended_result': {
+                    'oem_part_number': 'NOT_FOUND',
+                    'description': description,
+                    'confidence': 0.0
+                }
+            }
+    
+    except Exception as e:
+        logger.error(f"Error in resolve_part_name: {e}")
+        return {
+            'success': False,
+            'error': str(e),
+            'recommended_result': {
+                'oem_part_number': 'NOT_FOUND',
+                'description': description,
+                'confidence': 0.0
+            }
+        }
