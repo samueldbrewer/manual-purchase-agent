@@ -10,12 +10,72 @@ purchases_bp = Blueprint('purchases', __name__)
 
 @purchases_bp.route('', methods=['POST'])
 def create_purchase():
-    """Purchase automation functionality has been removed"""
-    return jsonify({
-        'success': False,
-        'error': 'Purchase automation functionality has been removed',
-        'message': 'This feature is no longer available'
-    }), 501
+    """Execute automated purchase using recorded browser interactions"""
+    try:
+        data = request.json
+        
+        # Validate required fields
+        part_number = data.get('part_number')
+        supplier_url = data.get('supplier_url')
+        billing_profile_id = data.get('billing_profile_id')
+        
+        if not all([part_number, supplier_url, billing_profile_id]):
+            return jsonify({
+                'success': False,
+                'error': 'Missing required fields',
+                'message': 'part_number, supplier_url, and billing_profile_id are required'
+            }), 400
+        
+        # Optional fields
+        quantity = data.get('quantity', 1)
+        recording_name = data.get('recording_name')
+        
+        # Import and execute purchase
+        from services.purchase_service import PurchaseAutomator
+        
+        with PurchaseAutomator() as automator:
+            result = automator.purchase_part(
+                part_number=part_number,
+                supplier_url=supplier_url,
+                billing_profile_id=billing_profile_id,
+                quantity=quantity,
+                recording_name=recording_name
+            )
+        
+        # Return appropriate status code
+        status_code = 200 if result.get('success') else 400
+        return jsonify(result), status_code
+        
+    except Exception as e:
+        logger.error(f"Error in purchase endpoint: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500
+
+@purchases_bp.route('/available-recordings', methods=['GET'])
+def get_available_recordings():
+    """Get list of available purchase recordings"""
+    try:
+        from services.purchase_service import PurchaseAutomator
+        
+        with PurchaseAutomator() as automator:
+            recordings = automator.get_available_recordings()
+        
+        return jsonify({
+            'success': True,
+            'recordings': recordings,
+            'count': len(recordings)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting available recordings: {e}")
+        return jsonify({
+            'success': False,
+            'error': 'Error getting recordings',
+            'message': str(e)
+        }), 500
 
 @purchases_bp.route('', methods=['GET'])
 def get_purchases():
