@@ -77,6 +77,18 @@ class PurchaseAutomator:
             dict: Purchase result with success status and details
         """
         try:
+            # Check if Node.js is available for recording system
+            import shutil
+            if not shutil.which('node'):
+                return {
+                    "success": False,
+                    "error": "Purchase automation not available in Railway deployment",
+                    "message": "The Node.js-based recording system is only available in local development. For production purchase automation, please use a local instance.",
+                    "part_number": part_number,
+                    "supplier_url": supplier_url,
+                    "note": "Purchase recordings require Node.js and cannot run in the Railway Python-only environment"
+                }
+            
             # Check if purchases are enabled
             enable_purchases = getattr(Config, 'ENABLE_REAL_PURCHASES', None)
             if not enable_purchases or enable_purchases.lower() != 'true':

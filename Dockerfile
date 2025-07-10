@@ -3,10 +3,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install Node.js and system dependencies including Playwright dependencies
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get update && apt-get install -y \
-    nodejs \
+# Install system dependencies including Playwright dependencies
+RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     wget \
@@ -37,11 +35,6 @@ RUN playwright install chromium
 
 # Copy application code
 COPY . .
-
-# Install Node.js dependencies for recording system
-WORKDIR /app/recording_system
-RUN npm install && npx playwright install chromium
-WORKDIR /app
 
 # Set environment variables
 ENV FLASK_APP=app.py
