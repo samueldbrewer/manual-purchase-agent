@@ -5,29 +5,39 @@ import os
 import logging
 from typing import Dict, List, Optional
 
-# Initialize OpenAI client - handle both new and old API versions
-try:
-    # Try to import using new OpenAI Python client (v1.0.0+)
-    from openai import OpenAI
-    openai_client = OpenAI(api_key=os.getenv('OPENAI_API_KEY')) if os.getenv('OPENAI_API_KEY') else None
-    USING_NEW_OPENAI_CLIENT = True
-    logger = logging.getLogger(__name__)
-    logger.info("Using new OpenAI client (v1.0.0+)")
-except ImportError:
-    # Fall back to legacy OpenAI client (v0.x)
-    import openai
-    openai.api_key = os.getenv('OPENAI_API_KEY')
-    openai_client = None
-    USING_NEW_OPENAI_CLIENT = False
-    logger = logging.getLogger(__name__)
-    logger.info("Using legacy OpenAI client")
+# Set up logging first
+logger = logging.getLogger(__name__)
+
+# Initialize OpenAI client - defer initialization to avoid startup errors
+openai_client = None
+USING_NEW_OPENAI_CLIENT = True
+
+def get_openai_client():
+    """Get OpenAI client with proper error handling"""
+    global openai_client
+    if openai_client is None:
+        try:
+            api_key = os.getenv('OPENAI_API_KEY')
+            if not api_key:
+                logger.warning("OpenAI API key not configured")
+                return None
+            
+            # Try to import using new OpenAI Python client (v1.0.0+)
+            from openai import OpenAI
+            openai_client = OpenAI(api_key=api_key)
+            logger.info("OpenAI client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenAI client: {e}")
+            openai_client = None
+    
+    return openai_client
 
 generic_parts_bp = Blueprint('generic_parts', __name__)
 
 class GenericPartsFinder:
     def __init__(self):
         self.serpapi_key = os.getenv('SERPAPI_KEY')
-        self.openai_client = openai_client
+        # Don't initialize OpenAI client here - use get_openai_client() when needed
     
     def find_generic_alternatives(self, make: str, model: str, oem_part_number: str, 
                                 oem_part_description: str, options: Dict = None) -> Dict:
@@ -228,27 +238,33 @@ class GenericPartsFinder:
         """
         
         try:
-            # Handle both new and old OpenAI clients - using GPT-4.1-Nano
+            # Get OpenAI client safely
+            client = get_openai_client()
+            if not client:
+                logger.warning("OpenAI client not available - skipping AI analysis")
+                return []
+            
+            # Handle both new and old OpenAI clients - using GPT-4o-mini (more stable)
             if USING_NEW_OPENAI_CLIENT:
-                response = self.openai_client.chat.completions.create(
-                    model="gpt-4.1-nano",
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
                     messages=[
-                        {"role": "system", "content": "You are an expert in automotive and industrial parts cross-referencing using GPT-4.1-Nano's enhanced analytical capabilities. Analyze search results to find compatible generic alternatives to OEM parts with comprehensive analysis."},
+                        {"role": "system", "content": "You are an expert in automotive and industrial parts cross-referencing. Analyze search results to find compatible generic alternatives to OEM parts with comprehensive analysis."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_tokens=32768,  # GPT-4.1-Nano max completion tokens
+                    max_tokens=4000,  # Stable token limit
                     temperature=0.2   # Lower temperature for more precise analysis
                 )
             else:
-                # Legacy OpenAI client - using GPT-4.1-Nano
+                # Legacy OpenAI client - using GPT-4o-mini
                 import openai
                 response = openai.ChatCompletion.create(
-                    model="gpt-4.1-nano",
+                    model="gpt-4o-mini",
                     messages=[
-                        {"role": "system", "content": "You are an expert in automotive and industrial parts cross-referencing using GPT-4.1-Nano's enhanced analytical capabilities. Analyze search results to find compatible generic alternatives to OEM parts with comprehensive analysis."},
+                        {"role": "system", "content": "You are an expert in automotive and industrial parts cross-referencing. Analyze search results to find compatible generic alternatives to OEM parts with comprehensive analysis."},
                         {"role": "user", "content": prompt}
                     ],
-                    max_tokens=32768,  # GPT-4.1-Nano max completion tokens
+                    max_tokens=4000,  # Stable token limit
                     temperature=0.2   # Lower temperature for more precise analysis
                 )
             
