@@ -9,8 +9,16 @@ class Config:
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     
-    # Database settings - Railway provides DATABASE_URL, fallback to SQLite for local dev
-    DATABASE_URI = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI', 'sqlite:///instance/app.db')
+    # Database settings - Railway provides DATABASE_URL, fallback to in-memory SQLite for Railway
+    DATABASE_URI = os.environ.get('DATABASE_URL') or os.environ.get('DATABASE_URI')
+    
+    # If no database URL is provided, use in-memory SQLite for Railway or local file for development
+    if not DATABASE_URI:
+        # Check if we're in Railway environment (read-only filesystem)
+        if os.path.exists('/app') and os.getcwd() == '/app':
+            DATABASE_URI = 'sqlite:///:memory:'  # In-memory database for Railway
+        else:
+            DATABASE_URI = 'sqlite:///instance/app.db'  # Local file for development
     SQLALCHEMY_DATABASE_URI = DATABASE_URI
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
