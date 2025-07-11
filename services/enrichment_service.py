@@ -149,3 +149,132 @@ class EnrichmentService:
         except Exception as e:
             logger.error(f"Error getting pricing info: {e}")
             return None
+    
+    def get_enrichment_data(self, make, model, year=None, part_number=None):
+        """Get enrichment data for equipment or parts."""
+        try:
+            # Build search query
+            if part_number:
+                query = f"{make} {model} {part_number}"
+                subject = f"{make} {model} part {part_number}"
+            else:
+                query = f"{make} {model} {year if year else ''} equipment manual parts"
+                subject = f"{make} {model} {year if year else ''}"
+            
+            # Search for multimedia content
+            videos = self._search_videos(query)
+            articles = self._search_articles(query) 
+            images = self._search_images(query)
+            
+            return {
+                "success": True,
+                "query": query,
+                "subject": subject,
+                "data": {
+                    "videos": videos,
+                    "articles": articles,
+                    "images": images
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting enrichment data: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "data": {
+                    "videos": [],
+                    "articles": [],
+                    "images": []
+                }
+            }
+    
+    def _search_videos(self, query):
+        """Search for related videos."""
+        try:
+            if not self.serpapi_key:
+                return []
+            
+            search = GoogleSearch({
+                "q": f"{query} video tutorial",
+                "tbm": "vid",
+                "api_key": self.serpapi_key,
+                "num": 5
+            })
+            
+            results = search.get_dict()
+            videos = []
+            
+            for result in results.get("video_results", []):
+                videos.append({
+                    "title": result.get("title", ""),
+                    "url": result.get("link", ""),
+                    "thumbnail": result.get("thumbnail", ""),
+                    "duration": result.get("duration", ""),
+                    "source": result.get("source", "")
+                })
+            
+            return videos
+            
+        except Exception as e:
+            logger.error(f"Error searching videos: {e}")
+            return []
+    
+    def _search_articles(self, query):
+        """Search for related articles and documentation."""
+        try:
+            if not self.serpapi_key:
+                return []
+            
+            search = GoogleSearch({
+                "q": f"{query} manual documentation",
+                "api_key": self.serpapi_key,
+                "num": 5
+            })
+            
+            results = search.get_dict()
+            articles = []
+            
+            for result in results.get("organic_results", []):
+                articles.append({
+                    "title": result.get("title", ""),
+                    "url": result.get("link", ""),
+                    "snippet": result.get("snippet", ""),
+                    "source": result.get("displayed_link", "")
+                })
+            
+            return articles
+            
+        except Exception as e:
+            logger.error(f"Error searching articles: {e}")
+            return []
+    
+    def _search_images(self, query):
+        """Search for related images."""
+        try:
+            if not self.serpapi_key:
+                return []
+            
+            search = GoogleSearch({
+                "q": f"{query} parts diagram",
+                "tbm": "isch",
+                "api_key": self.serpapi_key,
+                "num": 5
+            })
+            
+            results = search.get_dict()
+            images = []
+            
+            for result in results.get("images_results", []):
+                images.append({
+                    "title": result.get("title", ""),
+                    "url": result.get("original", ""),
+                    "thumbnail": result.get("thumbnail", ""),
+                    "source": result.get("source", "")
+                })
+            
+            return images
+            
+        except Exception as e:
+            logger.error(f"Error searching images: {e}")
+            return []
