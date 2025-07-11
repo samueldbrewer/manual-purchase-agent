@@ -24,14 +24,27 @@ def create_app():
     # Initialize database
     db.init_app(app)
     
-    # Create tables if they don't exist (Railway PostgreSQL or local SQLite)
+    # Debug database configuration
+    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', 'Not configured')
+    print(f"Database URI: {db_uri[:50]}..." if len(db_uri) > 50 else f"Database URI: {db_uri}")
+    print(f"DATABASE_URL env var: {'Set' if os.environ.get('DATABASE_URL') else 'Not set'}")
+    print(f"Working directory: {os.getcwd()}")
+    
+    # Create tables if they don't exist
     with app.app_context():
         try:
+            # For Railway, skip table creation if database isn't ready
+            if 'sqlite' not in db_uri.lower():
+                print("Detected PostgreSQL database - attempting table creation")
+            else:
+                print("Detected SQLite database - creating instance directory")
+                os.makedirs('instance', exist_ok=True)
+            
             db.create_all()
             print("Database tables created successfully")
         except Exception as e:
             print(f"Database table creation failed: {e}")
-            print("Will retry table creation on first request")
+            print("Application will continue - tables may be created on first request")
             # Continue anyway - tables might already exist or database might not be ready yet
     
     # Register API blueprints
