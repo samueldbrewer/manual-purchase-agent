@@ -78,6 +78,16 @@ def create_app():
     def v4_static(filename):
         return send_from_directory('static/api-demo/v4', filename)
     
+    # CSS file routing for main page
+    @app.route('/styles.css')
+    def styles_css():
+        return send_from_directory('static/api-demo/v4', 'styles.css')
+    
+    # JS file routing for main page
+    @app.route('/app.js')
+    def app_js():
+        return send_from_directory('static/api-demo/v4', 'app.js')
+    
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):

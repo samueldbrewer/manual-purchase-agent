@@ -163,7 +163,7 @@ class PartResolver:
             }
 
 # Standalone function wrapper for backwards compatibility
-def resolve_part_name(description, make=None, model=None, use_database=True, use_manual_search=True, use_web_search=True, save_results=True):
+def resolve_part_name(description, make=None, model=None, year=None, use_database=True, use_manual_search=True, use_web_search=True, save_results=True, bypass_cache=False):
     """Standalone function wrapper for part resolution."""
     try:
         resolver = PartResolver()

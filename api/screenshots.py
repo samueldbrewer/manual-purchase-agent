@@ -68,3 +68,16 @@ def serve_supplier_screenshot(filename):
     except Exception as e:
         logger.error(f"Error serving screenshot: {e}")
         return jsonify({'error': str(e)}), 500
+
+@screenshots_bp.route('/supplier', methods=['POST'])
+def capture_supplier_screenshot():
+    """
+    Capture screenshots for supplier websites (alias for /suppliers)
+    
+    Request Body:
+        urls (list): List of supplier URLs to capture
+        
+    Returns:
+        JSON with screenshot paths for each URL
+    """
+    return capture_supplier_screenshots_endpoint()

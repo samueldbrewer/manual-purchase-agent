@@ -78,3 +78,27 @@ def get_enrichment_data():
             'success': False,
             'error': str(e)
         }), 500
+
+@enrichment_bp.route('/equipment', methods=['POST'])
+def enrich_equipment():
+    """
+    Enrich equipment data with multimedia content
+    
+    Request Body:
+        make (str): Equipment manufacturer
+        model (str): Equipment model
+        year (str, optional): Equipment year
+    """
+    return get_enrichment_data()
+
+@enrichment_bp.route('/part', methods=['POST'])
+def enrich_part():
+    """
+    Enrich part data with multimedia content
+    
+    Request Body:
+        part_number (str): OEM part number
+        description (str, optional): Part description
+        make (str, optional): Equipment manufacturer
+    """
+    return get_enrichment_data()
