@@ -3,297 +3,503 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PartsPro API Demo - Live Technical Documentation</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="demo.css?v=2.0">
+    <title>PartsPro API Demo - Live Testing</title>
     <style>
-        /* Inline fallback styles */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
-            color: #333;
-            line-height: 1.6;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
             min-height: 100vh;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
-        .hero { 
-            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
-            backdrop-filter: blur(20px);
-            padding: 80px 0 100px;
-            text-align: center;
-            color: white;
-            margin-bottom: 60px;
-        }
-        .hero-title { 
-            font-size: 3.5rem;
-            font-weight: 800;
-            margin-bottom: 24px;
-        }
-        .hero-title i { 
-            margin-right: 20px;
-            color: #ffd700;
-        }
-        .hero-subtitle { 
-            font-size: 1.4rem;
-            margin-bottom: 16px;
-            opacity: 0.95;
-        }
-        .hero-description { 
-            font-size: 1.1rem;
-            opacity: 0.85;
-            max-width: 650px;
+
+        .container {
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 20px;
         }
-        .demo-grid { 
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 32px;
-            margin-bottom: 100px;
-        }
-        .demo-card { 
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 24px;
-            padding: 36px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            transition: all 0.4s ease;
-        }
-        .demo-card:hover { 
-            transform: translateY(-12px);
-            box-shadow: 0 32px 60px rgba(102, 126, 234, 0.2);
-        }
-        .demo-icon { 
-            width: 72px;
-            height: 72px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-        }
-        .demo-icon i { 
-            font-size: 1.8rem;
-            color: white;
-        }
-        .demo-card h3 { 
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #1a202c;
-        }
-        .demo-card p { 
-            color: #4a5568;
-            margin-bottom: 20px;
-            line-height: 1.6;
-        }
-        .demo-example { 
-            background: #f7fafc;
-            border-radius: 12px;
-            padding: 16px;
-            font-family: monospace;
-            font-size: 0.9rem;
-            color: #2d3748;
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-        }
-        .badge { 
-            background: #e2e8f0;
-            color: #2d3748;
-            padding: 8px 12px;
+
+        .header {
+            background: #2d2d2d;
+            padding: 30px;
             border-radius: 8px;
-            font-size: 0.8rem;
-            font-family: monospace;
-            font-weight: 600;
+            margin-bottom: 20px;
+            border: 1px solid #444;
         }
-        .footer { 
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(20px);
+
+        .header h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #aaa;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .demo-badge {
+            background: #FF9800;
             color: white;
-            text-align: center;
-            padding: 60px 0;
-            margin-top: 40px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .controls {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        label {
+            color: #4CAF50;
+            font-weight: bold;
+            min-width: 120px;
+        }
+
+        select, button {
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        select {
+            min-width: 350px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            padding: 12px 24px;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
+        .editor-section {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .editor-header {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .endpoint-info {
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .request-editor {
+            width: 100%;
+            height: 200px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-panel {
+            background: #2d2d2d;
+            border-radius: 8px;
+            border: 1px solid #444;
+            overflow: hidden;
+        }
+
+        .result-header {
+            background: #1a1a1a;
+            padding: 15px;
+            font-weight: bold;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-header {
+            color: #2196F3;
+        }
+
+        .response-header {
+            color: #FF9800;
+        }
+
+        .result-content {
+            height: 400px;
+            overflow-y: auto;
+            padding: 15px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+
+        .log-timestamp {
+            color: #888;
+            font-size: 11px;
+        }
+
+        .log-info {
+            color: #2196F3;
+        }
+
+        .log-success {
+            color: #4CAF50;
+        }
+
+        .log-error {
+            color: #f44336;
+        }
+
+        .response-content {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .status-success {
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .status-error {
+            color: #f44336;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .clear-btn {
+            background: #666;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .clear-btn:hover {
+            background: #777;
+        }
+
+        @media (max-width: 768px) {
+            .results {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            label {
+                min-width: auto;
+            }
+            
+            select {
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Hero Section -->
-    <div class="hero">
-        <div class="container">
-            <h1 class="hero-title">
-                <i class="fas fa-cogs"></i>
-                PartsPro API Demo
-            </h1>
-            <p class="hero-subtitle">Interactive technical documentation with live API testing</p>
-            <p class="hero-description">
-                Test our AI-powered parts intelligence APIs. Edit requests, see raw responses, 
-                and understand the business value of each endpoint.
-            </p>
-        </div>
-    </div>
-
-    <!-- Demo Cards -->
     <div class="container">
-        <div class="demo-grid">
-            <!-- Parts Resolution -->
-            <div class="demo-card" onclick="openModal('_0x5f2e')">
-                <div class="demo-icon">
-                    <i class="fas fa-search"></i>
+        <div class="header">
+            <h1>🚀 PartsPro API Demo</h1>
+            <p>Interactive demo of our AI-powered parts intelligence APIs</p>
+            <p>Test live endpoints, edit requests, and see real responses</p>
+            <div class="demo-badge">DEMO MODE - Live API Testing</div>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <label for="endpoint-select">Demo Endpoint:</label>
+                <select id="endpoint-select">
+                    <option value="">Select an API to test...</option>
+                    <option value="POST:/api/demo/parts/resolve">Parts Resolution - Convert description to OEM part number</option>
+                    <option value="POST:/api/demo/suppliers/search">Supplier Search - Find suppliers for any part</option>
+                    <option value="POST:/api/demo/manuals/search">Manual Search - Find technical manuals</option>
+                    <option value="POST:/api/demo/enrichment/equipment">Equipment Enrichment - Get videos, images, articles</option>
+                    <option value="POST:/api/demo/enrichment/part">Parts Enrichment - Get part-specific content</option>
+                </select>
+            </div>
+            <div class="control-row">
+                <button id="execute-btn" disabled>🎯 Execute Request</button>
+                <button id="clear-logs-btn" class="clear-btn">Clear Logs</button>
+            </div>
+        </div>
+
+        <div class="editor-section">
+            <div class="editor-header">
+                <span>📝 Request Editor (Fully Editable)</span>
+                <span class="endpoint-info" id="endpoint-info">Select an API endpoint to load sample request data</span>
+            </div>
+            <textarea id="request-editor" class="request-editor" placeholder="Select an endpoint to load sample request data..."></textarea>
+        </div>
+
+        <div class="results">
+            <div class="result-panel">
+                <div class="result-header log-header">
+                    🗂️ Request Log
+                    <button class="clear-btn" onclick="clearLogs()">Clear</button>
                 </div>
-                <h3>Parts Resolution</h3>
-                <p>Convert generic part descriptions to exact OEM part numbers using AI and web search</p>
-                <div class="demo-example">
-                    Example: "Bowl Lift Motor" → "00-917676"
-                </div>
-                <div class="demo-badges">
-                    <span class="badge">POST /api/parts/resolve</span>
+                <div class="result-content" id="log-content">
+                    <div class="log-entry log-success">
+                        <div class="log-timestamp">Demo Ready</div>
+                        <div>🎉 Welcome to PartsPro API Demo - Select an endpoint to start testing</div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Supplier Search -->
-            <div class="demo-card" onclick="openModal('_0x7c1d')">
-                <div class="demo-icon">
-                    <i class="fas fa-store"></i>
+            <div class="result-panel">
+                <div class="result-header response-header">
+                    📊 Live Response Data
+                    <button class="clear-btn" onclick="clearResponse()">Clear</button>
                 </div>
-                <h3>Supplier Search</h3>
-                <p>Find suppliers for any part number with AI-powered ranking and PartsTown priority</p>
-                <div class="demo-example">
-                    Example: "00-917676" → 5 suppliers found
-                </div>
-                <div class="demo-badges">
-                    <span class="badge">POST /api/suppliers/search</span>
-                </div>
-            </div>
-
-            <!-- Manual Search -->
-            <div class="demo-card" onclick="openModal('_0x9b4e')">
-                <div class="demo-icon">
-                    <i class="fas fa-book"></i>
-                </div>
-                <h3>Manual Search</h3>
-                <p>Find technical manuals and process them to extract error codes and part numbers</p>
-                <div class="demo-example">
-                    Example: "Henny Penny 500" → 8 manuals found
-                </div>
-                <div class="demo-badges">
-                    <span class="badge">POST /api/manuals/search</span>
-                </div>
-            </div>
-
-            <!-- Equipment Enrichment -->
-            <div class="demo-card" onclick="openModal('_0x4a7c')">
-                <div class="demo-icon">
-                    <i class="fas fa-industry"></i>
-                </div>
-                <h3>Equipment Enrichment</h3>
-                <p>Get videos, articles, and images for any piece of equipment using AI-powered search</p>
-                <div class="demo-example">
-                    Example: "Henny Penny 500" → 5 videos, 8 articles
-                </div>
-                <div class="demo-badges">
-                    <span class="badge">POST /api/enrichment/equipment</span>
-                </div>
-            </div>
-
-            <!-- Parts Enrichment -->
-            <div class="demo-card" onclick="openModal('_0x6e3d')">
-                <div class="demo-icon">
-                    <i class="fas fa-puzzle-piece"></i>
-                </div>
-                <h3>Parts Enrichment</h3>
-                <p>Get targeted multimedia content for specific parts with context from make and model</p>
-                <div class="demo-example">
-                    Example: "Hobart 00-917676" → targeted content
-                </div>
-                <div class="demo-badges">
-                    <span class="badge">POST /api/enrichment/part</span>
+                <div class="result-content" id="response-content">
+                    <div style="color: #888; font-style: italic;">Live API response data will appear here...</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modals -->
-    <div id="modalBackdrop" class="modal-backdrop" onclick="closeModal()">
-        <div class="modal" onclick="event.stopPropagation()">
-            <div class="modal-header">
-                <h2 id="modalTitle">API Demo</h2>
-                <button class="modal-close" onclick="closeModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-content">
-                <!-- Request Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-edit"></i> Request (Editable)</h3>
-                        <div class="section-actions">
-                            <button class="btn btn-secondary" onclick="resetRequest()">
-                                <i class="fas fa-undo"></i> Reset
-                            </button>
-                            <button class="btn btn-secondary" onclick="copyAsCurl()">
-                                <i class="fas fa-copy"></i> Copy as cURL
-                            </button>
-                        </div>
-                    </div>
-                    <div class="request-container">
-                        <div class="endpoint-info">
-                            <span class="method" id="requestMethod">POST</span>
-                            <span class="url" id="requestUrl">/api/parts/resolve</span>
-                        </div>
-                        <textarea id="requestEditor" class="code-editor" rows="8"></textarea>
-                        <div class="validation-message" id="validationMessage"></div>
-                    </div>
+    <script>
+        const endpointTemplates = {
+            'POST:/api/demo/parts/resolve': {
+                method: 'POST',
+                url: '/api/demo/parts/resolve',
+                body: {
+                    "description": "Bowl Lift Motor",
+                    "make": "Hobart",
+                    "model": "HL600",
+                    "use_database": false,
+                    "use_manual_search": true,
+                    "use_web_search": true,
+                    "save_results": false
+                },
+                description: 'Convert generic part descriptions to exact OEM part numbers using AI and web search'
+            },
+            'POST:/api/demo/suppliers/search': {
+                method: 'POST',
+                url: '/api/demo/suppliers/search',
+                body: {
+                    "part_number": "00-917676",
+                    "make": "Hobart",
+                    "model": "HL600",
+                    "oem_only": false,
+                    "use_v2": true
+                },
+                description: 'Find suppliers for any part number with AI-powered ranking and PartsTown priority'
+            },
+            'POST:/api/demo/manuals/search': {
+                method: 'POST',
+                url: '/api/demo/manuals/search',
+                body: {
+                    "make": "Henny Penny",
+                    "model": "500",
+                    "manual_type": "technical"
+                },
+                description: 'Find technical manuals and process them to extract error codes and part numbers'
+            },
+            'POST:/api/demo/enrichment/equipment': {
+                method: 'POST',
+                url: '/api/demo/enrichment/equipment',
+                body: {
+                    "make": "Henny Penny",
+                    "model": "500",
+                    "year": "2020"
+                },
+                description: 'Get videos, articles, and images for any piece of equipment using AI-powered search'
+            },
+            'POST:/api/demo/enrichment/part': {
+                method: 'POST',
+                url: '/api/demo/enrichment/part',
+                body: {
+                    "part_number": "00-917676",
+                    "description": "Bowl Lift Motor",
+                    "make": "Hobart",
+                    "model": "HL600"
+                },
+                description: 'Get targeted multimedia content for specific parts with context from make and model'
+            }
+        };
+
+        const endpointSelect = document.getElementById('endpoint-select');
+        const requestEditor = document.getElementById('request-editor');
+        const endpointInfo = document.getElementById('endpoint-info');
+        const executeBtn = document.getElementById('execute-btn');
+        const logContent = document.getElementById('log-content');
+        const responseContent = document.getElementById('response-content');
+
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <div class="log-timestamp">${timestamp}</div>
+                <div class="log-${type}">${message}</div>
+            `;
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        function clearLogs() {
+            logContent.innerHTML = '<div class="log-entry log-info"><div class="log-timestamp">Logs cleared</div><div>Ready for new API tests</div></div>';
+        }
+
+        function clearResponse() {
+            responseContent.innerHTML = '<div style="color: #888; font-style: italic;">Live API response data will appear here...</div>';
+        }
+
+        endpointSelect.addEventListener('change', function() {
+            const selectedEndpoint = this.value;
+            if (selectedEndpoint && endpointTemplates[selectedEndpoint]) {
+                const template = endpointTemplates[selectedEndpoint];
+                
+                // Update endpoint info
+                endpointInfo.textContent = `${template.method} ${template.url}`;
+                
+                // Show JSON request body in editor
+                requestEditor.value = JSON.stringify(template.body, null, 2);
+                executeBtn.disabled = false;
+                
+                addLog(`📝 Loaded ${selectedEndpoint.split(':')[1]}`, 'info');
+                addLog(`ℹ️  ${template.description}`, 'info');
+            } else {
+                endpointInfo.textContent = 'Select an API endpoint to load sample request data';
+                requestEditor.value = '';
+                executeBtn.disabled = true;
+            }
+        });
+
+        executeBtn.addEventListener('click', async function() {
+            const selectedEndpoint = endpointSelect.value;
+            if (!selectedEndpoint || !endpointTemplates[selectedEndpoint]) {
+                addLog('❌ No endpoint selected', 'error');
+                return;
+            }
+
+            const template = endpointTemplates[selectedEndpoint];
+            let requestBody;
+            
+            // Parse the request body from editor
+            try {
+                requestBody = JSON.parse(requestEditor.value);
+            } catch (e) {
+                addLog(`❌ Invalid JSON in request: ${e.message}`, 'error');
+                return;
+            }
+
+            addLog(`🚀 Executing ${template.method} ${template.url}`, 'info');
+            addLog(`📤 Request: ${JSON.stringify(requestBody)}`, 'info');
+
+            executeBtn.disabled = true;
+            executeBtn.textContent = '⏳ Executing...';
+
+            try {
+                const startTime = performance.now();
+                
+                const response = await fetch(template.url, {
+                    method: template.method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Demo-Key': 'prefix_test_key'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+                
+                const responseData = await response.text();
+                let formattedResponse;
+                
+                try {
+                    const jsonData = JSON.parse(responseData);
+                    formattedResponse = JSON.stringify(jsonData, null, 2);
+                } catch (e) {
+                    formattedResponse = responseData;
+                }
+
+                if (response.ok) {
+                    addLog(`✅ Success ${response.status} - ${duration}ms`, 'success');
+                } else {
+                    addLog(`❌ Error ${response.status} - ${duration}ms`, 'error');
+                }
+
+                // Display response
+                responseContent.innerHTML = `<div class="status-${response.ok ? 'success' : 'error'}">
+                    HTTP ${response.status} ${response.statusText} (${duration}ms)
                 </div>
+                <div class="response-content">${formattedResponse}</div>`;
 
-                <!-- Execute Button -->
-                <div class="execute-section">
-                    <button class="btn btn-primary btn-execute" onclick="executeRequest()" id="executeBtn">
-                        <i class="fas fa-play"></i>
-                        Execute Request
-                    </button>
-                </div>
+                addLog(`📥 Response received (${formattedResponse.length} characters)`, response.ok ? 'success' : 'error');
 
-                <!-- Response Section -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-code"></i> Raw Response</h3>
-                        <div class="section-actions">
-                            <button class="btn btn-secondary" onclick="copyResponse()" id="copyResponseBtn" disabled>
-                                <i class="fas fa-copy"></i> Copy Response
-                            </button>
-                        </div>
-                    </div>
-                    <div class="response-container">
-                        <div class="response-status" id="responseStatus"></div>
-                        <pre class="code-viewer" id="responseViewer">Execute a request to see the response...</pre>
-                    </div>
-                </div>
+            } catch (error) {
+                addLog(`💥 Network error: ${error.message}`, 'error');
+                responseContent.innerHTML = `<div class="status-error">Network Error: ${error.message}</div>`;
+            } finally {
+                executeBtn.disabled = false;
+                executeBtn.textContent = '🎯 Execute Request';
+            }
+        });
 
-                <!-- Formatted Response -->
-                <div class="section">
-                    <div class="section-header">
-                        <h3><i class="fas fa-magic"></i> Formatted Response</h3>
-                    </div>
-                    <div class="formatted-response" id="formattedResponse">
-                        <div class="placeholder">
-                            <i class="fas fa-info-circle"></i>
-                            Execute a request to see the formatted business value
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <p>Powered by <strong>PartsPro API</strong> - AI-Powered Parts Intelligence</p>
-        </div>
-    </footer>
-
-    <script src="demo.min.js"></script>
+        // Clear logs button
+        document.getElementById('clear-logs-btn').addEventListener('click', clearLogs);
+        
+        // Initial welcome message
+        addLog('🎉 PartsPro API Demo initialized successfully', 'success');
+        addLog('💡 Select an endpoint from the dropdown to begin testing our AI APIs', 'info');
+    </script>
 </body>
 </html>
