@@ -73,6 +73,16 @@ def create_app():
     def api_test():
         return send_from_directory('static', 'api-test.html')
     
+    # Customer Demo
+    @app.route('/customer-demo')
+    def customer_demo():
+        return send_from_directory('static/customer-demo', 'index.html')
+    
+    # Customer Demo Assets
+    @app.route('/customer-demo/<path:filename>')
+    def customer_demo_assets(filename):
+        return send_from_directory('static/customer-demo', filename)
+    
     # Static file serving for V4 interface
     @app.route('/v4/<path:filename>')
     def v4_static(filename):

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PartsPro API Demo - Live Technical Documentation</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero">
+        <div class="container">
+            <h1 class="hero-title">
+                <i class="fas fa-cogs"></i>
+                PartsPro API Demo
+            </h1>
+            <p class="hero-subtitle">Interactive technical documentation with live API testing</p>
+            <p class="hero-description">
+                Test our AI-powered parts intelligence APIs. Edit requests, see raw responses, 
+                and understand the business value of each endpoint.
+            </p>
+        </div>
+    </div>
+
+    <!-- Demo Cards -->
+    <div class="container">
+        <div class="demo-grid">
+            <!-- Parts Resolution -->
+            <div class="demo-card" onclick="openModal('partsResolution')">
+                <div class="demo-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h3>Parts Resolution</h3>
+                <p>Convert generic part descriptions to exact OEM part numbers using AI and web search</p>
+                <div class="demo-example">
+                    Example: "Bowl Lift Motor" → "00-917676"
+                </div>
+                <div class="demo-badges">
+                    <span class="badge">POST /api/parts/resolve</span>
+                </div>
+            </div>
+
+            <!-- Supplier Search -->
+            <div class="demo-card" onclick="openModal('supplierSearch')">
+                <div class="demo-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <h3>Supplier Search</h3>
+                <p>Find suppliers for any part number with AI-powered ranking and PartsTown priority</p>
+                <div class="demo-example">
+                    Example: "00-917676" → 5 suppliers found
+                </div>
+                <div class="demo-badges">
+                    <span class="badge">POST /api/suppliers/search</span>
+                </div>
+            </div>
+
+            <!-- Manual Search -->
+            <div class="demo-card" onclick="openModal('manualSearch')">
+                <div class="demo-icon">
+                    <i class="fas fa-book"></i>
+                </div>
+                <h3>Manual Search</h3>
+                <p>Find technical manuals and process them to extract error codes and part numbers</p>
+                <div class="demo-example">
+                    Example: "Henny Penny 500" → 8 manuals found
+                </div>
+                <div class="demo-badges">
+                    <span class="badge">POST /api/manuals/search</span>
+                </div>
+            </div>
+
+            <!-- Equipment Enrichment -->
+            <div class="demo-card" onclick="openModal('equipmentEnrichment')">
+                <div class="demo-icon">
+                    <i class="fas fa-industry"></i>
+                </div>
+                <h3>Equipment Enrichment</h3>
+                <p>Get videos, articles, and images for any piece of equipment using AI-powered search</p>
+                <div class="demo-example">
+                    Example: "Henny Penny 500" → 5 videos, 8 articles
+                </div>
+                <div class="demo-badges">
+                    <span class="badge">POST /api/enrichment/equipment</span>
+                </div>
+            </div>
+
+            <!-- Parts Enrichment -->
+            <div class="demo-card" onclick="openModal('partsEnrichment')">
+                <div class="demo-icon">
+                    <i class="fas fa-puzzle-piece"></i>
+                </div>
+                <h3>Parts Enrichment</h3>
+                <p>Get targeted multimedia content for specific parts with context from make and model</p>
+                <div class="demo-example">
+                    Example: "Hobart 00-917676" → targeted content
+                </div>
+                <div class="demo-badges">
+                    <span class="badge">POST /api/enrichment/part</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalBackdrop" class="modal-backdrop" onclick="closeModal()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modalTitle">API Demo</h2>
+                <button class="modal-close" onclick="closeModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-content">
+                <!-- Request Section -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-edit"></i> Request (Editable)</h3>
+                        <div class="section-actions">
+                            <button class="btn btn-secondary" onclick="resetRequest()">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                            <button class="btn btn-secondary" onclick="copyAsCurl()">
+                                <i class="fas fa-copy"></i> Copy as cURL
+                            </button>
+                        </div>
+                    </div>
+                    <div class="request-container">
+                        <div class="endpoint-info">
+                            <span class="method" id="requestMethod">POST</span>
+                            <span class="url" id="requestUrl">/api/parts/resolve</span>
+                        </div>
+                        <textarea id="requestEditor" class="code-editor" rows="8"></textarea>
+                        <div class="validation-message" id="validationMessage"></div>
+                    </div>
+                </div>
+
+                <!-- Execute Button -->
+                <div class="execute-section">
+                    <button class="btn btn-primary btn-execute" onclick="executeRequest()" id="executeBtn">
+                        <i class="fas fa-play"></i>
+                        Execute Request
+                    </button>
+                </div>
+
+                <!-- Response Section -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-code"></i> Raw Response</h3>
+                        <div class="section-actions">
+                            <button class="btn btn-secondary" onclick="copyResponse()" id="copyResponseBtn" disabled>
+                                <i class="fas fa-copy"></i> Copy Response
+                            </button>
+                        </div>
+                    </div>
+                    <div class="response-container">
+                        <div class="response-status" id="responseStatus"></div>
+                        <pre class="code-viewer" id="responseViewer">Execute a request to see the response...</pre>
+                    </div>
+                </div>
+
+                <!-- Formatted Response -->
+                <div class="section">
+                    <div class="section-header">
+                        <h3><i class="fas fa-magic"></i> Formatted Response</h3>
+                    </div>
+                    <div class="formatted-response" id="formattedResponse">
+                        <div class="placeholder">
+                            <i class="fas fa-info-circle"></i>
+                            Execute a request to see the formatted business value
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>Powered by <strong>PartsPro API</strong> - AI-Powered Parts Intelligence</p>
+        </div>
+    </footer>
+
+    <script src="demo.js"></script>
+</body>
+</html>
