@@ -62,20 +62,28 @@ def create_app():
     app.register_blueprint(demo_bp, url_prefix='/api/demo')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
-    # Root route serves the V4 interface
+    # Root route serves the V4 interface - protected
     @app.route('/')
     def index():
-        return send_from_directory('static/api-demo/v4', 'index.html')
+        from middleware.demo_auth import require_demo_key
+        @require_demo_key
+        def protected_index():
+            return send_from_directory('static/api-demo/v4', 'index.html')
+        return protected_index()
     
     # Health check endpoint
     @app.route('/health')
     def health():
         return jsonify({"status": "healthy", "version": "v15.6"})
     
-    # API Test Console
+    # API Test Console - protected
     @app.route('/api-test')
     def api_test():
-        return send_from_directory('static', 'api-test.html')
+        from middleware.demo_auth import require_demo_key
+        @require_demo_key
+        def protected_api_test():
+            return send_from_directory('static', 'api-test.html')
+        return protected_api_test()
     
     # Customer Demo
     @app.route('/customer-demo')
@@ -87,20 +95,32 @@ def create_app():
     def customer_demo_assets(filename):
         return send_from_directory('static/customer-demo', filename)
     
-    # Static file serving for V4 interface
+    # Static file serving for V4 interface - protected
     @app.route('/v4/<path:filename>')
     def v4_static(filename):
-        return send_from_directory('static/api-demo/v4', filename)
+        from middleware.demo_auth import require_demo_key
+        @require_demo_key
+        def protected_v4_static():
+            return send_from_directory('static/api-demo/v4', filename)
+        return protected_v4_static()
     
-    # CSS file routing for main page
+    # CSS file routing for main page - protected
     @app.route('/styles.css')
     def styles_css():
-        return send_from_directory('static/api-demo/v4', 'styles.css')
+        from middleware.demo_auth import require_demo_key
+        @require_demo_key
+        def protected_styles():
+            return send_from_directory('static/api-demo/v4', 'styles.css')
+        return protected_styles()
     
-    # JS file routing for main page
+    # JS file routing for main page - protected
     @app.route('/app.js')
     def app_js():
-        return send_from_directory('static/api-demo/v4', 'app.js')
+        from middleware.demo_auth import require_demo_key
+        @require_demo_key
+        def protected_js():
+            return send_from_directory('static/api-demo/v4', 'app.js')
+        return protected_js()
     
     # Error handlers
     @app.errorhandler(404)

@@ -14,11 +14,18 @@ logger = logging.getLogger(__name__)
 
 # Demo API keys (in production, store in database)
 DEMO_KEYS = {
-    'demo_prospect_001': {
-        'company': 'Acme Corp',
-        'contact': 'john.doe@acme.com',
-        'expires': datetime.now() + timedelta(days=7),
-        'usage_limit': 100,
+    'prefix_test_key': {
+        'company': 'Test/Demo Access',
+        'contact': 'demo@partspro.com',
+        'expires': datetime.now() + timedelta(days=365000),  # Never expires (1000 years)
+        'usage_limit': 999999,  # Unlimited usage
+        'current_usage': 0
+    },
+    'admin_full_access_2024': {
+        'company': 'PartsPro Admin Access',
+        'contact': 'admin@partspro.com', 
+        'expires': datetime.now() + timedelta(days=365000),  # Never expires
+        'usage_limit': 999999,  # Unlimited usage
         'current_usage': 0
     },
     'demo_prospect_002': {
