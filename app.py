@@ -9,6 +9,8 @@ from api.system import system_bp
 from api.enrichment import enrichment_bp
 from api.screenshots import screenshots_bp
 from api.generic_parts import generic_parts_bp
+from api.demo import demo_bp
+from api.admin import admin_bp
 import os
 
 def create_app():
@@ -57,6 +59,8 @@ def create_app():
     app.register_blueprint(enrichment_bp, url_prefix='/api/enrichment')
     app.register_blueprint(screenshots_bp, url_prefix='/api/screenshots')
     app.register_blueprint(generic_parts_bp, url_prefix='/api/parts')
+    app.register_blueprint(demo_bp, url_prefix='/api/demo')
+    app.register_blueprint(admin_bp, url_prefix='/api/admin')
     
     # Root route serves the V4 interface
     @app.route('/')
