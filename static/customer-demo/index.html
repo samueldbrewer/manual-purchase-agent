@@ -7,6 +7,116 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="demo.css?v=2.0">
+    <style>
+        /* Inline fallback styles */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+        .hero { 
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(20px);
+            padding: 80px 0 100px;
+            text-align: center;
+            color: white;
+            margin-bottom: 60px;
+        }
+        .hero-title { 
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+        }
+        .hero-title i { 
+            margin-right: 20px;
+            color: #ffd700;
+        }
+        .hero-subtitle { 
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+            opacity: 0.95;
+        }
+        .hero-description { 
+            font-size: 1.1rem;
+            opacity: 0.85;
+            max-width: 650px;
+            margin: 0 auto;
+        }
+        .demo-grid { 
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 32px;
+            margin-bottom: 100px;
+        }
+        .demo-card { 
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 24px;
+            padding: 36px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.4s ease;
+        }
+        .demo-card:hover { 
+            transform: translateY(-12px);
+            box-shadow: 0 32px 60px rgba(102, 126, 234, 0.2);
+        }
+        .demo-icon { 
+            width: 72px;
+            height: 72px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .demo-icon i { 
+            font-size: 1.8rem;
+            color: white;
+        }
+        .demo-card h3 { 
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a202c;
+        }
+        .demo-card p { 
+            color: #4a5568;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .demo-example { 
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 16px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #2d3748;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .badge { 
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            font-weight: 600;
+        }
+        .footer { 
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            color: white;
+            text-align: center;
+            padding: 60px 0;
+            margin-top: 40px;
+        }
+    </style>
 </head>
 <body>
     <!-- Hero Section -->

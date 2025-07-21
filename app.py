@@ -93,7 +93,11 @@ def create_app():
     # Customer Demo Assets
     @app.route('/customer-demo/<path:filename>')
     def customer_demo_assets(filename):
-        return send_from_directory('static/customer-demo', filename)
+        response = send_from_directory('static/customer-demo', filename)
+        if filename.endswith('.css'):
+            response.headers['Content-Type'] = 'text/css'
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return response
     
     # Static file serving for V4 interface - protected
     @app.route('/v4/<path:filename>')
