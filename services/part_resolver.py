@@ -123,28 +123,72 @@ class PartResolver:
             return {"error": str(e), "success": False, "confidence": 0.0}
     
     def _extract_part_numbers_from_text(self, text):
-        """Extract potential part numbers from text."""
+        """Extract real OEM part numbers from text using improved patterns."""
         import re
         
-        # Common part number patterns
-        patterns = [
-            r'\b[A-Z0-9]{6,12}\b',  # Alphanumeric codes
-            r'\b\d{2,4}[A-Z]{1,3}\d{2,6}\b',  # Number-letter-number patterns
-            r'\b[A-Z]{2,4}\d{4,8}\b'  # Letter-number patterns
-        ]
+        # Exclude common false positives
+        blacklist = {
+            'MANUAL', 'MANUALS', 'PARTS', 'SERVICE', 'REPAIR', 'GUIDE', 'BOOK',
+            'TECHNICAL', 'OPERATION', 'INSTRUCTION', 'DOCUMENT', 'CATALOG',
+            'HOBART', 'HENNY', 'PENNY', 'CARRIER', 'TRANE', 'AMERICAN', 'STANDARD'
+        }
         
         part_numbers = []
-        for pattern in patterns:
-            matches = re.findall(pattern, text.upper())
+        
+        # Pattern 1: Hobart style (00-917676, 00-123456)
+        hobart_pattern = r'\b\d{2}-\d{6}\b'
+        matches = re.findall(hobart_pattern, text)
+        for match in matches:
+            part_numbers.append({
+                "oem_part_number": match,
+                "description": "Hobart OEM part number",
+                "confidence": 0.9
+            })
+        
+        # Pattern 2: Henny Penny style (HP-14-026, 67589, 140402)
+        hp_patterns = [
+            r'\bHP-\d{2}-\d{3}\b',  # HP-14-026
+            r'\b\d{5,6}\b'          # 67589, 140402
+        ]
+        for pattern in hp_patterns:
+            matches = re.findall(pattern, text)
             for match in matches:
-                if len(match) >= 6:  # Minimum length for part numbers
+                if match.upper() not in blacklist and not match.isalpha():
                     part_numbers.append({
                         "oem_part_number": match,
-                        "description": "Found in search results",
-                        "confidence": 0.6
+                        "description": "Henny Penny OEM part number", 
+                        "confidence": 0.85
                     })
         
-        return part_numbers[:3]  # Return top 3 matches
+        # Pattern 3: General OEM patterns (avoid generic words)
+        general_patterns = [
+            r'\b[A-Z]{2,3}\d{4,8}\b',    # AB1234567
+            r'\b\d{2,4}-[A-Z]{1,3}-\d{2,6}\b',  # 12-AB-34567
+            r'\b[A-Z]\d{2}-\d{6}\b'      # A12-123456
+        ]
+        
+        for pattern in general_patterns:
+            matches = re.findall(pattern, text.upper())
+            for match in matches:
+                # Skip if in blacklist or looks like a common word
+                if (match.upper() not in blacklist and 
+                    not match.replace('-', '').isalpha() and
+                    len(match) >= 5):
+                    part_numbers.append({
+                        "oem_part_number": match,
+                        "description": "OEM part number from search",
+                        "confidence": 0.7
+                    })
+        
+        # Remove duplicates and sort by confidence
+        seen = set()
+        unique_parts = []
+        for part in sorted(part_numbers, key=lambda x: x['confidence'], reverse=True):
+            if part['oem_part_number'] not in seen:
+                seen.add(part['oem_part_number'])
+                unique_parts.append(part)
+        
+        return unique_parts[:3]  # Return top 3 matches
     
     def _select_best_result(self, web_result, ai_result):
         """Select the best result based on confidence scores."""
