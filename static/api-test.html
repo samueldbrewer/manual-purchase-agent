@@ -255,6 +255,15 @@
                     <optgroup label="Manuals">
                         <option value="POST:/api/manuals/search">Search Manuals</option>
                         <option value="GET:/api/manuals">Get All Manuals</option>
+                        <option value="POST:/api/manuals">Create Manual Entry</option>
+                        <option value="POST:/api/manuals/1/download">Download Manual (ID=1)</option>
+                        <option value="POST:/api/manuals/1/process">Process Manual for Parts/Errors (ID=1)</option>
+                        <option value="POST:/api/manuals/multi-process">Process Multiple Manuals</option>
+                        <option value="GET:/api/manuals/1/components">Extract Manual Components (ID=1)</option>
+                        <option value="POST:/api/manuals/1/process-components">Process Components with Custom Prompt (ID=1)</option>
+                        <option value="GET:/api/manuals/1/error-codes">Get Error Codes (ID=1)</option>
+                        <option value="GET:/api/manuals/1/part-numbers">Get Part Numbers (ID=1)</option>
+                        <option value="GET:/api/manuals/1">Get Specific Manual (ID=1)</option>
                     </optgroup>
                     <optgroup label="Enrichment">
                         <option value="POST:/api/enrichment/equipment">Enrich Equipment Data</option>
@@ -369,6 +378,71 @@
                 url: '/api/manuals?page=1&per_page=10',
                 body: null,
                 description: 'Get all manuals with pagination'
+            },
+            'POST:/api/manuals': {
+                method: 'POST',
+                url: '/api/manuals',
+                body: {
+                    "title": "Henny Penny 500 Technical Manual",
+                    "make": "Henny Penny",
+                    "model": "500",
+                    "year": "2020",
+                    "url": "https://www.hennypenny.com/wp-content/uploads/2015/01/PFE-PFG_500-561-600-Ops-Manual-Electro-Mech.pdf",
+                    "file_format": "pdf"
+                },
+                description: 'Create a new manual entry'
+            },
+            'POST:/api/manuals/1/download': {
+                method: 'POST',
+                url: '/api/manuals/1/download',
+                body: null,
+                description: 'Download a manual to local storage'
+            },
+            'POST:/api/manuals/1/process': {
+                method: 'POST',
+                url: '/api/manuals/1/process',
+                body: null,
+                description: 'Process manual to extract error codes and part numbers using GPT-4.1-Nano'
+            },
+            'POST:/api/manuals/multi-process': {
+                method: 'POST',
+                url: '/api/manuals/multi-process',
+                body: {
+                    "manual_ids": [1, 2, 3]
+                },
+                description: 'Process multiple manuals and reconcile results'
+            },
+            'GET:/api/manuals/1/components': {
+                method: 'GET',
+                url: '/api/manuals/1/components',
+                body: null,
+                description: 'Extract structural components from manual (table of contents, exploded views, etc.)'
+            },
+            'POST:/api/manuals/1/process-components': {
+                method: 'POST',
+                url: '/api/manuals/1/process-components',
+                body: {
+                    "prompt": "Extract all maintenance procedures and their page ranges"
+                },
+                description: 'Process manual components with custom GPT-4.1-Nano prompt'
+            },
+            'GET:/api/manuals/1/error-codes': {
+                method: 'GET',
+                url: '/api/manuals/1/error-codes',
+                body: null,
+                description: 'Get all error codes extracted from a processed manual'
+            },
+            'GET:/api/manuals/1/part-numbers': {
+                method: 'GET',
+                url: '/api/manuals/1/part-numbers',
+                body: null,
+                description: 'Get all part numbers extracted from a processed manual'
+            },
+            'GET:/api/manuals/1': {
+                method: 'GET',
+                url: '/api/manuals/1',
+                body: null,
+                description: 'Get specific manual details by ID'
             },
             'POST:/api/enrichment/equipment': {
                 method: 'POST',
