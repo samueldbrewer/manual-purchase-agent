@@ -98,7 +98,7 @@ class PartResolver:
             """
             
             response = client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="gpt-4.1-mini-2025-04-14",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=100
             )

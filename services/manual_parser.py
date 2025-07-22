@@ -67,7 +67,7 @@ class ManualParser:
                 """ + text[:50000]  # Limit text length
                 
                 response = openai.ChatCompletion.create(
-                    model="gpt-4",
+                    model="gpt-4.1-mini-2025-04-14",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=2000
                 )
@@ -120,7 +120,7 @@ class ManualParser:
                 """ + text[:50000]  # Limit text length
                 
                 response = openai.ChatCompletion.create(
-                    model="gpt-4",
+                    model="gpt-4.1-mini-2025-04-14",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=2000
                 )
@@ -232,7 +232,7 @@ def extract_information(text, manual_id=None):
         logger.info(f"Processing manual{'ID ' + str(manual_id) if manual_id else ''} with GPT-4.1-Nano")
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Using available model
+            model="gpt-4.1-mini-2025-04-14",  # Using available model
             messages=[{"role": "user", "content": prompt}],
             max_tokens=4000,
             temperature=0.1
@@ -318,7 +318,7 @@ def extract_components(text, custom_prompt=None):
             """
         
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4.1-mini-2025-04-14",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=2000,
             temperature=0.1
