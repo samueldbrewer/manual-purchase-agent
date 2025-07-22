@@ -171,10 +171,17 @@ def demo_manual_process():
             logger.info("Extracting text from PDF...")
             text = extract_text_from_pdf(local_path)
             logger.info(f"Extracted {len(text)} characters of text")
+            logger.info(f"Text preview (first 500 chars): {text[:500]}")
+            
+            # Check if we actually got meaningful text
+            if len(text.strip()) < 100:
+                logger.warning(f"Very little text extracted ({len(text)} chars), PDF might be image-based or corrupted")
             
             # Use AI to extract comprehensive information
             logger.info("Processing with AI...")
             extracted_info = extract_information(text)
+            logger.info(f"AI extraction results: {len(extracted_info.get('error_codes', []))} error codes, {len(extracted_info.get('part_numbers', []))} part numbers")
+            logger.info(f"Manual subject identified: {extracted_info.get('manual_subject', 'Unknown')}")
             
             # Build comprehensive response
             result = {
