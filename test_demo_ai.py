@@ -48,30 +48,19 @@ def main():
     print("🔧 Testing Demo AI Endpoints")
     print("=" * 50)
     
-    # Test manual search first
-    print("\n📖 1. Testing Manual Search")
-    manual_search_data = {
+    # Test PDF URL processing first
+    print("\n📄 1. Testing Direct PDF URL Processing")
+    pdf_process_data = {
+        "pdf_url": "https://www.hennypenny.com/wp-content/uploads/2015/01/PFE-PFG_500-561-600-Ops-Manual-Electro-Mech.pdf",
         "make": "Henny Penny",
-        "model": "500",
-        "manual_type": "technical"
+        "model": "500"
     }
     
-    if not test_demo_endpoint("/manuals/search", "POST", manual_search_data):
-        print("❌ Manual search failed - can't test AI endpoints without a manual")
-        sys.exit(1)
-    
-    # Test AI-powered error codes extraction
-    print("\n🚨 2. Testing AI Error Codes Extraction")
-    if not test_demo_endpoint("/manuals/error-codes?manual_id=1"):
-        print("❌ Error codes extraction failed")
-    
-    # Test AI-powered part numbers extraction  
-    print("\n🔧 3. Testing AI Part Numbers Extraction")
-    if not test_demo_endpoint("/manuals/part-numbers?manual_id=1"):
-        print("❌ Part numbers extraction failed")
+    if not test_demo_endpoint("/manuals/process", "POST", pdf_process_data):
+        print("⚠️ PDF processing failed - continuing with other tests")
     
     # Test parts resolution
-    print("\n🔍 4. Testing Parts Resolution")
+    print("\n🔍 2. Testing Parts Resolution")
     parts_data = {
         "description": "Bowl Lift Motor",
         "make": "Hobart", 
@@ -86,7 +75,7 @@ def main():
         print("❌ Parts resolution failed")
     
     # Test supplier search
-    print("\n🛒 5. Testing Supplier Search")
+    print("\n🛒 3. Testing Supplier Search")
     supplier_data = {
         "part_number": "00-917676",
         "make": "Hobart",

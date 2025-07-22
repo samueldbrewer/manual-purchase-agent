@@ -49,7 +49,7 @@ def demo_parts_resolve():
         logger.error(f"Demo parts resolution error: {e}")
         return jsonify({
             'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
+            'message': 'Demo API error - contact samueldbrewer@gmail.com for support'
         }), 500
 
 @demo_bp.route('/suppliers/search', methods=['POST'])
@@ -84,7 +84,7 @@ def demo_supplier_search():
         logger.error(f"Demo supplier search error: {e}")
         return jsonify({
             'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
+            'message': 'Demo API error - contact samueldbrewer@gmail.com for support'
         }), 500
 
 @demo_bp.route('/manuals/search', methods=['POST'])
@@ -127,33 +127,99 @@ def demo_manual_search():
         logger.error(f"Demo manual search error: {e}")
         return jsonify({
             'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
+            'message': 'Demo API error - contact samueldbrewer@gmail.com for support'
         }), 500
 
 @demo_bp.route('/manuals/process', methods=['POST'])
 @require_demo_key
 def demo_manual_process():
-    """Demo version of manual processing - calls real API"""
+    """Demo version of manual processing - accepts PDF URL and processes directly"""
     try:
         data = request.json
         
         # Validate required fields
-        manual_id = data.get('manual_id', 1)  # Default to manual ID 1 for demo
+        pdf_url = data.get('pdf_url')
+        make = data.get('make', 'Unknown')
+        model = data.get('model', 'Unknown')
         
-        logger.info(f"Demo manual processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
+        if not pdf_url:
+            return jsonify({
+                'error': 'pdf_url is required',
+                'message': 'Please provide a PDF URL to process'
+            }), 400
         
-        # Call the real manual processing API
-        from api.manuals import process_manual
-        from flask import current_app
+        logger.info(f"Demo manual processing for {g.demo_key_info['company']}: {pdf_url}")
         
-        with current_app.test_request_context(json=data):
-            response = process_manual(manual_id)
+        # Import required services
+        from services.manual_finder import download_manual as download_manual_service
+        from services.manual_parser import extract_text_from_pdf, extract_information
+        from services.temp_pdf_manager import TempPDFManager
+        import os
+        
+        temp_manager = TempPDFManager()
+        local_path = None
+        
+        try:
+            # Download PDF directly from URL
+            local_path = download_manual_service(pdf_url)
             
-            # Extract the response data
-            if hasattr(response, 'get_json'):
-                result = response.get_json()
-            else:
-                result = response[0].get_json() if isinstance(response, tuple) else response
+            # Extract text from PDF
+            text = extract_text_from_pdf(local_path)
+            
+            # Use AI to extract comprehensive information
+            extracted_info = extract_information(text)
+            
+            # Build comprehensive response
+            result = {
+                'success': True,
+                'pdf_url': pdf_url,
+                'make': make,
+                'model': model,
+                'processing_method': 'Direct PDF URL Processing with GPT-4.1-Nano',
+                'ai_model': 'gpt-4o-mini',
+                'extraction_source': 'Real-time AI extraction from PDF text',
+                'manual_subject': extracted_info.get('manual_subject', 'Unknown'),
+                
+                # Error codes with structured format
+                'error_codes': extracted_info.get('error_codes', []),
+                'error_codes_count': len(extracted_info.get('error_codes', [])),
+                'error_codes_format': 'Error Code Number, Short Error Description',
+                
+                # Part numbers with structured format  
+                'part_numbers': extracted_info.get('part_numbers', []),
+                'part_numbers_count': len(extracted_info.get('part_numbers', [])),
+                'part_numbers_format': 'OEM Part Number, Short Part Description',
+                
+                # Additional extracted information
+                'common_problems': extracted_info.get('common_problems', []),
+                'maintenance_procedures': extracted_info.get('maintenance_procedures', []),
+                'safety_warnings': extracted_info.get('safety_warnings', []),
+                
+                'processing_timestamp': request.json.get('timestamp') or 'Not provided'
+            }
+            
+            logger.info(f"Successfully processed PDF: {len(result['error_codes'])} error codes, {len(result['part_numbers'])} part numbers")
+            
+        except Exception as e:
+            logger.error(f"PDF processing failed: {e}")
+            result = {
+                'success': False,
+                'error': str(e),
+                'pdf_url': pdf_url,
+                'make': make,
+                'model': model,
+                'processing_method': 'Direct PDF URL Processing with GPT-4.1-Nano',
+                'message': 'Failed to process PDF - check URL accessibility'
+            }
+        
+        finally:
+            # Clean up temporary file
+            if local_path and os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                    logger.info(f"Cleaned up temporary file: {local_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temp file {local_path}: {e}")
         
         # Add watermark
         result = add_demo_watermark(result)
@@ -164,136 +230,9 @@ def demo_manual_process():
         logger.error(f"Demo manual processing error: {e}")
         return jsonify({
             'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
+            'message': 'Demo API error - contact samueldbrewer@gmail.com for support'
         }), 500
 
-@demo_bp.route('/manuals/error-codes', methods=['GET'])
-@require_demo_key
-def demo_manual_error_codes():
-    """Demo version of getting extracted error codes - uses AI processing"""
-    try:
-        manual_id = request.args.get('manual_id', 1, type=int)
-        
-        logger.info(f"Demo error codes retrieval with AI processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
-        
-        # Get the manual from the database
-        from models.manual import Manual
-        from services.manual_finder import download_manual as download_manual_service
-        from services.manual_parser import extract_text_from_pdf, extract_information
-        import os
-        
-        manual = Manual.query.get(manual_id)
-        if not manual:
-            return jsonify({'error': f'Manual with ID {manual_id} not found'}), 404
-        
-        # Download the manual if not already downloaded
-        if not manual.local_path or not os.path.exists(manual.local_path):
-            try:
-                local_path = download_manual_service(manual.url)
-                manual.local_path = local_path
-                from models import db
-                db.session.commit()
-            except Exception as e:
-                logger.error(f"Failed to download manual: {e}")
-                return jsonify({'error': 'Failed to download manual for processing'}), 500
-        
-        # Extract text and use AI to get error codes
-        try:
-            text = extract_text_from_pdf(manual.local_path)
-            extracted_info = extract_information(text, manual_id)
-            
-            result = {
-                'manual_id': manual_id,
-                'manual_title': manual.title,
-                'make': manual.make,
-                'model': manual.model,
-                'error_codes': extracted_info.get('error_codes', []),
-                'total_count': len(extracted_info.get('error_codes', [])),
-                'format': 'Error Code Number, Short Error Description',
-                'extraction_source': 'GPT-4.1-Nano AI Processing',
-                'processing_method': 'Real-time AI extraction from PDF text',
-                'ai_model': 'gpt-4o-mini'
-            }
-            
-        except Exception as e:
-            logger.error(f"AI processing failed: {e}")
-            return jsonify({'error': f'AI processing failed: {str(e)}'}), 500
-        
-        # Add watermark
-        result = add_demo_watermark(result)
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        logger.error(f"Demo error codes retrieval error: {e}")
-        return jsonify({
-            'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
-        }), 500
-
-@demo_bp.route('/manuals/part-numbers', methods=['GET'])
-@require_demo_key
-def demo_manual_part_numbers():
-    """Demo version of getting extracted part numbers - uses AI processing"""
-    try:
-        manual_id = request.args.get('manual_id', 1, type=int)
-        
-        logger.info(f"Demo part numbers retrieval with AI processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
-        
-        # Get the manual from the database
-        from models.manual import Manual
-        from services.manual_finder import download_manual as download_manual_service
-        from services.manual_parser import extract_text_from_pdf, extract_information
-        import os
-        
-        manual = Manual.query.get(manual_id)
-        if not manual:
-            return jsonify({'error': f'Manual with ID {manual_id} not found'}), 404
-        
-        # Download the manual if not already downloaded
-        if not manual.local_path or not os.path.exists(manual.local_path):
-            try:
-                local_path = download_manual_service(manual.url)
-                manual.local_path = local_path
-                from models import db
-                db.session.commit()
-            except Exception as e:
-                logger.error(f"Failed to download manual: {e}")
-                return jsonify({'error': 'Failed to download manual for processing'}), 500
-        
-        # Extract text and use AI to get part numbers
-        try:
-            text = extract_text_from_pdf(manual.local_path)
-            extracted_info = extract_information(text, manual_id)
-            
-            result = {
-                'manual_id': manual_id,
-                'manual_title': manual.title,
-                'make': manual.make,
-                'model': manual.model,
-                'part_numbers': extracted_info.get('part_numbers', []),
-                'total_count': len(extracted_info.get('part_numbers', [])),
-                'format': 'OEM Part Number, Short Part Description',
-                'extraction_source': 'GPT-4.1-Nano AI Processing',
-                'processing_method': 'Real-time AI extraction from PDF text',
-                'ai_model': 'gpt-4o-mini'
-            }
-            
-        except Exception as e:
-            logger.error(f"AI processing failed: {e}")
-            return jsonify({'error': f'AI processing failed: {str(e)}'}), 500
-        
-        # Add watermark
-        result = add_demo_watermark(result)
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        logger.error(f"Demo part numbers retrieval error: {e}")
-        return jsonify({
-            'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
-        }), 500
 
 @demo_bp.route('/enrichment/equipment', methods=['POST'])
 @require_demo_key
@@ -326,7 +265,7 @@ def demo_equipment_enrichment():
         logger.error(f"Demo equipment enrichment error: {e}")
         return jsonify({
             'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
+            'message': 'Demo API error - contact samueldbrewer@gmail.com for support'
         }), 500
 
 @demo_bp.route('/enrichment/part', methods=['POST'])
@@ -368,7 +307,7 @@ def demo_part_enrichment():
         logger.error(f"Demo part enrichment error: {e}")
         return jsonify({
             'error': str(e),
-            'message': 'Demo API error - contact sales@partspro.com for support'
+            'message': 'Demo API error - contact samueldbrewer@gmail.com for support'
         }), 500
 
 @demo_bp.route('/status', methods=['GET'])
@@ -381,7 +320,7 @@ def demo_status():
             'company': g.demo_key_info['company'],
             'usage': f"{g.demo_key_info['current_usage']}/{g.demo_key_info['usage_limit']}",
             'expires': g.demo_key_info['expires'].isoformat(),
-            'contact_sales': 'sales@partspro.com'
+            'contact_sales': 'samueldbrewer@gmail.com'
         })
     except Exception as e:
         logger.error(f"Demo status error: {e}")

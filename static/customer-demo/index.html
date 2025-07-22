@@ -386,9 +386,7 @@
                     <option value="POST:/api/demo/parts/resolve">Parts Resolution — Convert description to OEM part number</option>
                     <option value="POST:/api/demo/suppliers/search">Supplier Search — Find suppliers for any part</option>
                     <option value="POST:/api/demo/manuals/search">Manual Search — Find technical manuals</option>
-                    <option value="POST:/api/demo/manuals/process">Manual Processing — Extract parts & errors with AI</option>
-                    <option value="GET:/api/demo/manuals/error-codes">Error Codes — Get extracted error codes</option>
-                    <option value="GET:/api/demo/manuals/part-numbers">Part Numbers — Get extracted part numbers</option>
+                    <option value="POST:/api/demo/manuals/process">Manual Processing — Process any PDF URL with AI</option>
                     <option value="POST:/api/demo/enrichment/equipment">Equipment Enrichment — Get videos, images, articles</option>
                     <option value="POST:/api/demo/enrichment/part">Parts Enrichment — Get part-specific content</option>
                 </select>
@@ -472,32 +470,18 @@
                 method: 'POST',
                 url: '/api/demo/manuals/process',
                 body: {
-                    "manual_id": 1,
-                    "extract_error_codes": true,
-                    "extract_part_numbers": true,
-                    "custom_prompt": "Extract all error codes with descriptions and OEM part numbers with descriptions"
+                    "pdf_url": "https://www.hennypenny.com/wp-content/uploads/2015/01/PFE-PFG_500-561-600-Ops-Manual-Electro-Mech.pdf",
+                    "make": "Henny Penny",
+                    "model": "500"
                 },
-                description: 'Process manual PDFs using GPT-4.1-Nano to extract error codes and part numbers (up to 1M tokens)'
-            },
-            'GET:/api/demo/manuals/error-codes': {
-                method: 'GET',
-                url: '/api/demo/manuals/error-codes?manual_id=1',
-                body: null,
-                description: 'Get all error codes extracted from processed manuals with format "Error Code Number", "Short Error Description"'
-            },
-            'GET:/api/demo/manuals/part-numbers': {
-                method: 'GET',
-                url: '/api/demo/manuals/part-numbers?manual_id=1',
-                body: null,
-                description: 'Get all OEM part numbers extracted from processed manuals with format "OEM Part Number", "Short Part Description"'
+                description: 'Process any PDF URL directly using GPT-4.1-Nano to extract error codes, part numbers, and more (up to 1M tokens)'
             },
             'POST:/api/demo/enrichment/equipment': {
                 method: 'POST',
                 url: '/api/demo/enrichment/equipment',
                 body: {
                     "make": "Henny Penny",
-                    "model": "500",
-                    "year": "2020"
+                    "model": "500"
                 },
                 description: 'Get videos, articles, and images for any piece of equipment using AI-powered search'
             },
