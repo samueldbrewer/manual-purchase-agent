@@ -170,7 +170,7 @@ def extract_information(text, manual_id=None):
         # Initialize OpenAI client
         openai_api_key = os.environ.get('OPENAI_API_KEY')
         if not openai_api_key:
-            logger.error("OpenAI API key not configured")
+            logger.error("OpenAI API key not configured - OPENAI_API_KEY environment variable not found")
             return {
                 'error_codes': [],
                 'part_numbers': [],
@@ -179,6 +179,8 @@ def extract_information(text, manual_id=None):
                 'maintenance_procedures': [],
                 'safety_warnings': []
             }
+        
+        logger.info(f"OpenAI API key found: {openai_api_key[:12]}... (length: {len(openai_api_key)})")
         
         client = OpenAI(api_key=openai_api_key)
         
@@ -229,14 +231,26 @@ def extract_information(text, manual_id=None):
         {text}
         """
         
-        logger.info(f"Processing manual{'ID ' + str(manual_id) if manual_id else ''} with GPT-4.1-Nano")
+        logger.info(f"Processing manual{'ID ' + str(manual_id) if manual_id else ''} with GPT-4.1-mini-2025-04-14")
         
-        response = client.chat.completions.create(
-            model="gpt-4.1-mini-2025-04-14",  # Using available model
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=4000,
-            temperature=0.1
-        )
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4.1-mini-2025-04-14",  # Using available model
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=4000,
+                temperature=0.1
+            )
+            logger.info("OpenAI API call successful")
+        except Exception as api_error:
+            logger.error(f"OpenAI API call failed: {api_error}")
+            return {
+                'error_codes': [],
+                'part_numbers': [],
+                'manual_subject': 'Unknown',
+                'common_problems': [],
+                'maintenance_procedures': [],
+                'safety_warnings': []
+            }
         
         # Parse the JSON response
         content = response.choices[0].message.content
