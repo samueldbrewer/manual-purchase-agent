@@ -9,6 +9,8 @@ from services.part_resolver import resolve_part_name
 from services.supplier_finder import find_suppliers
 from services.manual_finder import search_manuals
 from services.enrichment_service import EnrichmentService
+from services.manual_parser import process_manual_for_parts_and_errors
+from models.manual import Manual
 import logging
 
 logger = logging.getLogger(__name__)
@@ -125,6 +127,136 @@ def demo_manual_search():
         
     except Exception as e:
         logger.error(f"Demo manual search error: {e}")
+        return jsonify({
+            'error': str(e),
+            'message': 'Demo API error - contact sales@partspro.com for support'
+        }), 500
+
+@demo_bp.route('/manuals/process', methods=['POST'])
+@require_demo_key
+def demo_manual_process():
+    """Demo version of manual processing with GPT-4.1-Nano"""
+    try:
+        data = request.json
+        
+        # Validate required fields
+        manual_id = data.get('manual_id', 1)  # Default to manual ID 1 for demo
+        
+        logger.info(f"Demo manual processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
+        
+        # For demo, create a sample processed result since we don't want to actually process large PDFs
+        result = {
+            'manual_id': manual_id,
+            'processing_status': 'completed',
+            'processing_time_seconds': 45,
+            'tokens_used': 156789,
+            'max_tokens_supported': 1000000,
+            'extracted_data': {
+                'error_codes': [
+                    {'code': 'E01', 'description': 'Temperature sensor malfunction'},
+                    {'code': 'E02', 'description': 'Pressure switch failure'},
+                    {'code': 'E03', 'description': 'Motor overload protection triggered'},
+                    {'code': 'F04', 'description': 'Gas valve control error'}
+                ],
+                'part_numbers': [
+                    {'part_number': '00-917676', 'description': 'Bowl Lift Motor Assembly'},
+                    {'part_number': '00-425371', 'description': 'Temperature Probe Sensor'},
+                    {'part_number': '00-293847', 'description': 'Pressure Switch Assembly'},
+                    {'part_number': '00-156432', 'description': 'Control Board Main'}
+                ]
+            },
+            'extraction_method': 'GPT-4.1-Nano PDF Processing',
+            'confidence_scores': {
+                'error_codes': 0.94,
+                'part_numbers': 0.91
+            }
+        }
+        
+        # Add watermark
+        result = add_demo_watermark(result)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Demo manual processing error: {e}")
+        return jsonify({
+            'error': str(e),
+            'message': 'Demo API error - contact sales@partspro.com for support'
+        }), 500
+
+@demo_bp.route('/manuals/error-codes', methods=['GET'])
+@require_demo_key
+def demo_manual_error_codes():
+    """Demo version of getting extracted error codes"""
+    try:
+        manual_id = request.args.get('manual_id', 1, type=int)
+        
+        logger.info(f"Demo error codes retrieval for {g.demo_key_info['company']}: Manual ID {manual_id}")
+        
+        # Demo error codes data
+        result = {
+            'manual_id': manual_id,
+            'error_codes': [
+                {'code': 'E01', 'description': 'Temperature sensor malfunction', 'page_reference': 'Page 45'},
+                {'code': 'E02', 'description': 'Pressure switch failure', 'page_reference': 'Page 47'},
+                {'code': 'E03', 'description': 'Motor overload protection triggered', 'page_reference': 'Page 52'},
+                {'code': 'F04', 'description': 'Gas valve control error', 'page_reference': 'Page 38'},
+                {'code': 'F05', 'description': 'Ignition system fault', 'page_reference': 'Page 41'},
+                {'code': 'A10', 'description': 'Calibration mode active', 'page_reference': 'Page 67'}
+            ],
+            'total_count': 6,
+            'format': 'Error Code Number, Short Error Description',
+            'extraction_source': 'GPT-4.1-Nano PDF Analysis',
+            'processing_date': '2024-01-15T10:30:45Z'
+        }
+        
+        # Add watermark
+        result = add_demo_watermark(result)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Demo error codes retrieval error: {e}")
+        return jsonify({
+            'error': str(e),
+            'message': 'Demo API error - contact sales@partspro.com for support'
+        }), 500
+
+@demo_bp.route('/manuals/part-numbers', methods=['GET'])
+@require_demo_key
+def demo_manual_part_numbers():
+    """Demo version of getting extracted part numbers"""
+    try:
+        manual_id = request.args.get('manual_id', 1, type=int)
+        
+        logger.info(f"Demo part numbers retrieval for {g.demo_key_info['company']}: Manual ID {manual_id}")
+        
+        # Demo part numbers data
+        result = {
+            'manual_id': manual_id,
+            'part_numbers': [
+                {'part_number': '00-917676', 'description': 'Bowl Lift Motor Assembly', 'page_reference': 'Page 23'},
+                {'part_number': '00-425371', 'description': 'Temperature Probe Sensor', 'page_reference': 'Page 31'},
+                {'part_number': '00-293847', 'description': 'Pressure Switch Assembly', 'page_reference': 'Page 28'},
+                {'part_number': '00-156432', 'description': 'Control Board Main', 'page_reference': 'Page 15'},
+                {'part_number': '00-789234', 'description': 'Gas Valve Solenoid', 'page_reference': 'Page 19'},
+                {'part_number': '00-345678', 'description': 'Timer Control Module', 'page_reference': 'Page 33'},
+                {'part_number': '00-567890', 'description': 'Safety Door Switch', 'page_reference': 'Page 42'},
+                {'part_number': '00-123456', 'description': 'Heating Element Assembly', 'page_reference': 'Page 26'}
+            ],
+            'total_count': 8,
+            'format': 'OEM Part Number, Short Part Description',
+            'extraction_source': 'GPT-4.1-Nano PDF Analysis',
+            'processing_date': '2024-01-15T10:30:45Z'
+        }
+        
+        # Add watermark
+        result = add_demo_watermark(result)
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        logger.error(f"Demo part numbers retrieval error: {e}")
         return jsonify({
             'error': str(e),
             'message': 'Demo API error - contact sales@partspro.com for support'
