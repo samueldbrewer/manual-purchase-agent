@@ -20,8 +20,9 @@ class ManualParser:
         try:
             doc = fitz.open(pdf_path)
             text = ""
+            page_count = len(doc)
             
-            for page_num in range(len(doc)):
+            for page_num in range(page_count):
                 page = doc.load_page(page_num)
                 text += page.get_text()
             
@@ -30,7 +31,7 @@ class ManualParser:
             return {
                 "success": True,
                 "text": text,
-                "page_count": len(doc)
+                "page_count": page_count
             }
             
         except Exception as e:

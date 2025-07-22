@@ -159,12 +159,21 @@ def demo_manual_process():
         
         try:
             # Download PDF directly from URL
+            logger.info(f"Downloading PDF from: {pdf_url}")
             local_path = download_manual_service(pdf_url)
+            logger.info(f"PDF downloaded to: {local_path}")
+            
+            # Check if file exists
+            if not os.path.exists(local_path):
+                raise Exception(f"Downloaded file not found at {local_path}")
             
             # Extract text from PDF
+            logger.info("Extracting text from PDF...")
             text = extract_text_from_pdf(local_path)
+            logger.info(f"Extracted {len(text)} characters of text")
             
             # Use AI to extract comprehensive information
+            logger.info("Processing with AI...")
             extracted_info = extract_information(text)
             
             # Build comprehensive response
@@ -199,7 +208,7 @@ def demo_manual_process():
             logger.info(f"Successfully processed PDF: {len(result['error_codes'])} error codes, {len(result['part_numbers'])} part numbers")
             
         except Exception as e:
-            logger.error(f"PDF processing failed: {e}")
+            logger.error(f"PDF processing failed: {e}", exc_info=True)
             result = {
                 'success': False,
                 'error': str(e),

@@ -16,14 +16,14 @@ logger = logging.getLogger(__name__)
 DEMO_KEYS = {
     'prefix_test_key': {
         'company': 'Test/Demo Access',
-        'contact': 'demo@partspro.com',
+        'contact': 'samueldbrewer@gmail.com',
         'expires': datetime.now() + timedelta(days=365000),  # Never expires (1000 years)
         'usage_limit': 999999,  # Unlimited usage
         'current_usage': 0
     },
     'admin_full_access_2024': {
         'company': 'PartsPro Admin Access',
-        'contact': 'admin@partspro.com', 
+        'contact': 'samueldbrewer@gmail.com', 
         'expires': datetime.now() + timedelta(days=365000),  # Never expires
         'usage_limit': 999999,  # Unlimited usage
         'current_usage': 0
@@ -51,7 +51,7 @@ def require_demo_key(f):
             logger.warning(f"Demo access attempt without key from IP: {request.remote_addr}")
             return jsonify({
                 'error': 'Demo API key required',
-                'message': 'Contact sales@partspro.com for demo access',
+                'message': 'Contact samueldbrewer@gmail.com for demo access',
                 'status': 'unauthorized'
             }), 401
         
@@ -61,7 +61,7 @@ def require_demo_key(f):
             logger.warning(f"Invalid demo key attempted: {demo_key[:8]}... from IP: {request.remote_addr}")
             return jsonify({
                 'error': 'Invalid demo API key',
-                'message': 'Contact sales@partspro.com for valid demo access',
+                'message': 'Contact samueldbrewer@gmail.com for valid demo access',
                 'status': 'unauthorized'
             }), 401
         
@@ -70,7 +70,7 @@ def require_demo_key(f):
             logger.info(f"Expired demo key used: {key_info['company']}")
             return jsonify({
                 'error': 'Demo API key expired',
-                'message': 'Your demo period has ended. Contact sales@partspro.com to continue',
+                'message': 'Your demo period has ended. Contact samueldbrewer@gmail.com to continue',
                 'status': 'expired'
             }), 401
         
@@ -79,7 +79,7 @@ def require_demo_key(f):
             logger.info(f"Demo usage limit exceeded: {key_info['company']}")
             return jsonify({
                 'error': 'Demo usage limit exceeded',
-                'message': 'You have reached your demo limit. Contact sales@partspro.com for full access',
+                'message': 'You have reached your demo limit. Contact samueldbrewer@gmail.com for full access',
                 'status': 'limit_exceeded'
             }), 429
         
@@ -134,7 +134,7 @@ def add_demo_watermark(response_data):
             '_demo_mode': True,
             '_demo_company': g.demo_key_info['company'],
             '_demo_usage': f"{g.demo_key_info['current_usage'] + 1}/{g.demo_key_info['usage_limit']}",
-            '_contact_sales': 'Full production access: sales@partspro.com',
+            '_contact_sales': 'Full production access: samueldbrewer@gmail.com',
             '_demo_expires': g.demo_key_info['expires'].isoformat()
         }
         

@@ -1202,3 +1202,61 @@ def proxy_manual(proxy_id):
     
     # Fallback to redirect for non-PDF or if proxying fails
     return redirect(original_url, code=302)
+
+@manuals_bp.route('/<int:manual_id>/error-codes', methods=['GET'])
+def get_manual_error_codes(manual_id):
+    """Get all error codes extracted from a processed manual"""
+    manual = Manual.query.get_or_404(manual_id)
+    
+    # Get error codes from the database
+    error_codes = ErrorCode.query.filter_by(manual_id=manual_id).all()
+    
+    result = {
+        'manual_id': manual_id,
+        'manual_title': manual.title,
+        'make': manual.make,
+        'model': manual.model,
+        'error_codes': [
+            {
+                'code': ec.code,
+                'description': ec.description,
+                'created_at': ec.created_at.isoformat() if ec.created_at else None
+            }
+            for ec in error_codes
+        ],
+        'total_count': len(error_codes),
+        'format': 'Error Code Number, Short Error Description',
+        'extraction_source': 'GPT-4.1-Nano PDF Analysis',
+        'processed': manual.processed
+    }
+    
+    return jsonify(result)
+
+@manuals_bp.route('/<int:manual_id>/part-numbers', methods=['GET'])
+def get_manual_part_numbers(manual_id):
+    """Get all OEM part numbers extracted from a processed manual"""
+    manual = Manual.query.get_or_404(manual_id)
+    
+    # Get part numbers from the database
+    part_numbers = PartReference.query.filter_by(manual_id=manual_id).all()
+    
+    result = {
+        'manual_id': manual_id,
+        'manual_title': manual.title,
+        'make': manual.make,
+        'model': manual.model,
+        'part_numbers': [
+            {
+                'part_number': pn.part_number,
+                'description': pn.description,
+                'created_at': pn.created_at.isoformat() if pn.created_at else None
+            }
+            for pn in part_numbers
+        ],
+        'total_count': len(part_numbers),
+        'format': 'OEM Part Number, Short Part Description',
+        'extraction_source': 'GPT-4.1-Nano PDF Analysis',
+        'processed': manual.processed
+    }
+    
+    return jsonify(result)
