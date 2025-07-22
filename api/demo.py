@@ -9,8 +9,6 @@ from services.part_resolver import resolve_part_name
 from services.supplier_finder import find_suppliers
 from services.manual_finder import search_manuals
 from services.enrichment_service import EnrichmentService
-from services.manual_parser import process_manual_for_parts_and_errors
-from models.manual import Manual
 import logging
 
 logger = logging.getLogger(__name__)
@@ -135,7 +133,7 @@ def demo_manual_search():
 @demo_bp.route('/manuals/process', methods=['POST'])
 @require_demo_key
 def demo_manual_process():
-    """Demo version of manual processing with GPT-4.1-Nano"""
+    """Demo version of manual processing - calls real API"""
     try:
         data = request.json
         
@@ -144,33 +142,18 @@ def demo_manual_process():
         
         logger.info(f"Demo manual processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
         
-        # For demo, create a sample processed result since we don't want to actually process large PDFs
-        result = {
-            'manual_id': manual_id,
-            'processing_status': 'completed',
-            'processing_time_seconds': 45,
-            'tokens_used': 156789,
-            'max_tokens_supported': 1000000,
-            'extracted_data': {
-                'error_codes': [
-                    {'code': 'E01', 'description': 'Temperature sensor malfunction'},
-                    {'code': 'E02', 'description': 'Pressure switch failure'},
-                    {'code': 'E03', 'description': 'Motor overload protection triggered'},
-                    {'code': 'F04', 'description': 'Gas valve control error'}
-                ],
-                'part_numbers': [
-                    {'part_number': '00-917676', 'description': 'Bowl Lift Motor Assembly'},
-                    {'part_number': '00-425371', 'description': 'Temperature Probe Sensor'},
-                    {'part_number': '00-293847', 'description': 'Pressure Switch Assembly'},
-                    {'part_number': '00-156432', 'description': 'Control Board Main'}
-                ]
-            },
-            'extraction_method': 'GPT-4.1-Nano PDF Processing',
-            'confidence_scores': {
-                'error_codes': 0.94,
-                'part_numbers': 0.91
-            }
-        }
+        # Call the real manual processing API
+        from api.manuals import process_manual
+        from flask import current_app
+        
+        with current_app.test_request_context(json=data):
+            response = process_manual(manual_id)
+            
+            # Extract the response data
+            if hasattr(response, 'get_json'):
+                result = response.get_json()
+            else:
+                result = response[0].get_json() if isinstance(response, tuple) else response
         
         # Add watermark
         result = add_demo_watermark(result)
@@ -187,28 +170,54 @@ def demo_manual_process():
 @demo_bp.route('/manuals/error-codes', methods=['GET'])
 @require_demo_key
 def demo_manual_error_codes():
-    """Demo version of getting extracted error codes"""
+    """Demo version of getting extracted error codes - uses AI processing"""
     try:
         manual_id = request.args.get('manual_id', 1, type=int)
         
-        logger.info(f"Demo error codes retrieval for {g.demo_key_info['company']}: Manual ID {manual_id}")
+        logger.info(f"Demo error codes retrieval with AI processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
         
-        # Demo error codes data
-        result = {
-            'manual_id': manual_id,
-            'error_codes': [
-                {'code': 'E01', 'description': 'Temperature sensor malfunction', 'page_reference': 'Page 45'},
-                {'code': 'E02', 'description': 'Pressure switch failure', 'page_reference': 'Page 47'},
-                {'code': 'E03', 'description': 'Motor overload protection triggered', 'page_reference': 'Page 52'},
-                {'code': 'F04', 'description': 'Gas valve control error', 'page_reference': 'Page 38'},
-                {'code': 'F05', 'description': 'Ignition system fault', 'page_reference': 'Page 41'},
-                {'code': 'A10', 'description': 'Calibration mode active', 'page_reference': 'Page 67'}
-            ],
-            'total_count': 6,
-            'format': 'Error Code Number, Short Error Description',
-            'extraction_source': 'GPT-4.1-Nano PDF Analysis',
-            'processing_date': '2024-01-15T10:30:45Z'
-        }
+        # Get the manual from the database
+        from models.manual import Manual
+        from services.manual_finder import download_manual as download_manual_service
+        from services.manual_parser import extract_text_from_pdf, extract_information
+        import os
+        
+        manual = Manual.query.get(manual_id)
+        if not manual:
+            return jsonify({'error': f'Manual with ID {manual_id} not found'}), 404
+        
+        # Download the manual if not already downloaded
+        if not manual.local_path or not os.path.exists(manual.local_path):
+            try:
+                local_path = download_manual_service(manual.url)
+                manual.local_path = local_path
+                from models import db
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Failed to download manual: {e}")
+                return jsonify({'error': 'Failed to download manual for processing'}), 500
+        
+        # Extract text and use AI to get error codes
+        try:
+            text = extract_text_from_pdf(manual.local_path)
+            extracted_info = extract_information(text, manual_id)
+            
+            result = {
+                'manual_id': manual_id,
+                'manual_title': manual.title,
+                'make': manual.make,
+                'model': manual.model,
+                'error_codes': extracted_info.get('error_codes', []),
+                'total_count': len(extracted_info.get('error_codes', [])),
+                'format': 'Error Code Number, Short Error Description',
+                'extraction_source': 'GPT-4.1-Nano AI Processing',
+                'processing_method': 'Real-time AI extraction from PDF text',
+                'ai_model': 'gpt-4o-mini'
+            }
+            
+        except Exception as e:
+            logger.error(f"AI processing failed: {e}")
+            return jsonify({'error': f'AI processing failed: {str(e)}'}), 500
         
         # Add watermark
         result = add_demo_watermark(result)
@@ -225,30 +234,54 @@ def demo_manual_error_codes():
 @demo_bp.route('/manuals/part-numbers', methods=['GET'])
 @require_demo_key
 def demo_manual_part_numbers():
-    """Demo version of getting extracted part numbers"""
+    """Demo version of getting extracted part numbers - uses AI processing"""
     try:
         manual_id = request.args.get('manual_id', 1, type=int)
         
-        logger.info(f"Demo part numbers retrieval for {g.demo_key_info['company']}: Manual ID {manual_id}")
+        logger.info(f"Demo part numbers retrieval with AI processing for {g.demo_key_info['company']}: Manual ID {manual_id}")
         
-        # Demo part numbers data
-        result = {
-            'manual_id': manual_id,
-            'part_numbers': [
-                {'part_number': '00-917676', 'description': 'Bowl Lift Motor Assembly', 'page_reference': 'Page 23'},
-                {'part_number': '00-425371', 'description': 'Temperature Probe Sensor', 'page_reference': 'Page 31'},
-                {'part_number': '00-293847', 'description': 'Pressure Switch Assembly', 'page_reference': 'Page 28'},
-                {'part_number': '00-156432', 'description': 'Control Board Main', 'page_reference': 'Page 15'},
-                {'part_number': '00-789234', 'description': 'Gas Valve Solenoid', 'page_reference': 'Page 19'},
-                {'part_number': '00-345678', 'description': 'Timer Control Module', 'page_reference': 'Page 33'},
-                {'part_number': '00-567890', 'description': 'Safety Door Switch', 'page_reference': 'Page 42'},
-                {'part_number': '00-123456', 'description': 'Heating Element Assembly', 'page_reference': 'Page 26'}
-            ],
-            'total_count': 8,
-            'format': 'OEM Part Number, Short Part Description',
-            'extraction_source': 'GPT-4.1-Nano PDF Analysis',
-            'processing_date': '2024-01-15T10:30:45Z'
-        }
+        # Get the manual from the database
+        from models.manual import Manual
+        from services.manual_finder import download_manual as download_manual_service
+        from services.manual_parser import extract_text_from_pdf, extract_information
+        import os
+        
+        manual = Manual.query.get(manual_id)
+        if not manual:
+            return jsonify({'error': f'Manual with ID {manual_id} not found'}), 404
+        
+        # Download the manual if not already downloaded
+        if not manual.local_path or not os.path.exists(manual.local_path):
+            try:
+                local_path = download_manual_service(manual.url)
+                manual.local_path = local_path
+                from models import db
+                db.session.commit()
+            except Exception as e:
+                logger.error(f"Failed to download manual: {e}")
+                return jsonify({'error': 'Failed to download manual for processing'}), 500
+        
+        # Extract text and use AI to get part numbers
+        try:
+            text = extract_text_from_pdf(manual.local_path)
+            extracted_info = extract_information(text, manual_id)
+            
+            result = {
+                'manual_id': manual_id,
+                'manual_title': manual.title,
+                'make': manual.make,
+                'model': manual.model,
+                'part_numbers': extracted_info.get('part_numbers', []),
+                'total_count': len(extracted_info.get('part_numbers', [])),
+                'format': 'OEM Part Number, Short Part Description',
+                'extraction_source': 'GPT-4.1-Nano AI Processing',
+                'processing_method': 'Real-time AI extraction from PDF text',
+                'ai_model': 'gpt-4o-mini'
+            }
+            
+        except Exception as e:
+            logger.error(f"AI processing failed: {e}")
+            return jsonify({'error': f'AI processing failed: {str(e)}'}), 500
         
         # Add watermark
         result = add_demo_watermark(result)
