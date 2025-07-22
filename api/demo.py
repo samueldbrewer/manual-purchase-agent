@@ -153,10 +153,8 @@ def demo_manual_process():
         # Import required services
         from services.manual_finder import download_manual as download_manual_service
         from services.manual_parser import extract_text_from_pdf, extract_information
-        from services.temp_pdf_manager import TempPDFManager
         import os
         
-        temp_manager = TempPDFManager()
         local_path = None
         
         try:
