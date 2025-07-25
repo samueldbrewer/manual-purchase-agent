@@ -180,14 +180,38 @@ def extract_information(text, manual_id=None):
         
         logger.info(f"OpenAI API key found: {openai_api_key[:12]}... (length: {len(openai_api_key)})")
         
+        # Try multiple initialization methods to handle different OpenAI library versions
+        client = None
         try:
+            # Method 1: Direct initialization
             client = OpenAI(api_key=openai_api_key)
-        except TypeError as init_error:
-            logger.error(f"OpenAI client initialization failed with api_key: {init_error}")
-            # Try alternative initialization without explicit api_key parameter
-            import os
-            os.environ['OPENAI_API_KEY'] = openai_api_key
-            client = OpenAI()
+            logger.info("OpenAI client initialized with direct api_key parameter")
+        except Exception as e1:
+            logger.warning(f"Direct OpenAI initialization failed: {e1}")
+            try:
+                # Method 2: Environment variable approach
+                original_key = os.environ.get('OPENAI_API_KEY')
+                os.environ['OPENAI_API_KEY'] = openai_api_key
+                client = OpenAI()
+                logger.info("OpenAI client initialized with environment variable")
+            except Exception as e2:
+                logger.error(f"Environment variable OpenAI initialization failed: {e2}")
+                try:
+                    # Method 3: Legacy client approach
+                    import openai as legacy_openai
+                    legacy_openai.api_key = openai_api_key
+                    client = "legacy"  # Flag to use legacy methods
+                    logger.info("Using legacy OpenAI client")
+                except Exception as e3:
+                    logger.error(f"All OpenAI initialization methods failed: {e1}, {e2}, {e3}")
+                    return {
+                        'error_codes': [],
+                        'part_numbers': [],
+                        'manual_subject': 'OpenAI initialization failed',
+                        'common_problems': [],
+                        'maintenance_procedures': [],
+                        'safety_warnings': []
+                    }
         
         # Limit text to prevent token overflow
         max_text_length = 100000  # ~25K tokens for GPT-4.1-Nano
@@ -239,12 +263,23 @@ def extract_information(text, manual_id=None):
         logger.info(f"Processing manual{'ID ' + str(manual_id) if manual_id else ''} with GPT-4.1-mini-2025-04-14")
         
         try:
-            response = client.chat.completions.create(
-                model="gpt-4.1-mini-2025-04-14",  # Using available model
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=4000,
-                temperature=0.1
-            )
+            if client == "legacy":
+                # Use legacy OpenAI client
+                import openai as legacy_openai
+                response = legacy_openai.ChatCompletion.create(
+                    model="gpt-4.1-mini-2025-04-14",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=4000,
+                    temperature=0.1
+                )
+            else:
+                # Use new OpenAI client
+                response = client.chat.completions.create(
+                    model="gpt-4.1-mini-2025-04-14",  # Using available model
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=4000,
+                    temperature=0.1
+                )
             logger.info("OpenAI API call successful")
         except Exception as api_error:
             logger.error(f"OpenAI API call failed: {api_error}")
