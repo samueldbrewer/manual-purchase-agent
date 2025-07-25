@@ -14,23 +14,23 @@ class PartResolver:
         self.openai_api_key = openai_api_key or os.environ.get('OPENAI_API_KEY')
     
     def resolve_part(self, description, make, model):
-        """Resolve a part description to OEM part number."""
+        """Resolve a part description to OEM part number using integrated web search and AI analysis."""
         try:
-            # Try web search first
+            # Step 1: Perform web search to gather data
             web_result = self._search_web_for_part(description, make, model)
             
-            # Try AI resolution
-            ai_result = self._ai_resolve_part(description, make, model)
+            # Step 2: Use AI to analyze web search results and provide intelligent resolution
+            ai_result = self._ai_analyze_web_results(description, make, model, web_result)
             
-            # Combine results and return best match
-            best_result = self._select_best_result(web_result, ai_result)
+            # Step 3: Select best result using improved logic
+            best_result = self._select_best_result_v2(web_result, ai_result, description, make, model)
             
             return {
                 "success": True,
                 "recommended_result": best_result,
                 "results": {
                     "web_search": web_result,
-                    "ai_search": ai_result
+                    "ai_analysis": ai_result
                 }
             }
             
@@ -78,48 +78,86 @@ class PartResolver:
         except Exception as e:
             return {"error": str(e), "success": False, "parts": [], "confidence": 0.0}
     
-    def _ai_resolve_part(self, description, make, model):
-        """Use AI to resolve part description."""
+    def _ai_analyze_web_results(self, description, make, model, web_result):
+        """Use AI to analyze web search results and provide intelligent part resolution."""
         try:
             if not self.openai_api_key:
-                return {"error": "OpenAI API key not configured"}
+                return {"error": "OpenAI API key not configured", "success": False}
             
             from openai import OpenAI
             client = OpenAI(api_key=self.openai_api_key)
             
+            # Prepare web search context
+            web_context = "No web search results available."
+            if web_result.get("success") and web_result.get("parts"):
+                parts_text = []
+                for part in web_result["parts"]:
+                    parts_text.append(f"- {part['oem_part_number']}: {part['description']} (confidence: {part['confidence']})")
+                web_context = f"Web search found these potential part numbers:\n" + "\n".join(parts_text)
+            
             prompt = f"""
-            For a {make} {model}, find the OEM part number for: {description}
-            
-            Respond with just the part number and description in this format:
-            "PART123", "Part Description"
-            
-            If you cannot determine the exact part number, respond with:
-            "UNKNOWN", "Cannot determine exact OEM part number"
+            You are an expert in {make} equipment parts. Analyze the following information to find the correct OEM part number.
+
+            Equipment: {make} {model}
+            Part needed: {description}
+
+            {web_context}
+
+            Your task:
+            1. Analyze the web search results for relevance to the specific part needed
+            2. Identify which part number is most likely correct for this specific equipment and part description
+            3. Consider the manufacturer's part numbering conventions
+            4. Assess the reliability of each source
+
+            Respond in JSON format:
+            {{
+                "oem_part_number": "XX-XXXXXX",
+                "description": "Detailed part description",
+                "confidence": 0.95,
+                "reasoning": "Explanation of why this is the correct part",
+                "validated_against_web": true
+            }}
+
+            If no reliable part number can be determined, respond with:
+            {{
+                "oem_part_number": "NOT_FOUND",
+                "description": "Unable to determine OEM part number",
+                "confidence": 0.0,
+                "reasoning": "Insufficient or unreliable information",
+                "validated_against_web": false
+            }}
             """
             
             response = client.chat.completions.create(
-                model="gpt-4.1-mini-2025-04-14",
+                model="gpt-4.1-nano-2025-04-14",
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=100
+                max_tokens=300
             )
             
             result = response.choices[0].message.content.strip()
             
-            if "UNKNOWN" not in result:
+            # Parse JSON response
+            import json
+            try:
+                parsed_result = json.loads(result)
                 return {
                     "success": True,
-                    "oem_part_number": result.split(',')[0].strip().strip('"'),
-                    "description": result.split(',')[1].strip().strip('"') if ',' in result else description,
-                    "confidence": 0.8
+                    "oem_part_number": parsed_result.get("oem_part_number"),
+                    "description": parsed_result.get("description", description),
+                    "confidence": parsed_result.get("confidence", 0.0),
+                    "reasoning": parsed_result.get("reasoning", ""),
+                    "validated_against_web": parsed_result.get("validated_against_web", False)
                 }
-            else:
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse AI response as JSON: {result}")
                 return {
                     "success": False,
-                    "error": "Could not determine OEM part number",
+                    "error": "Failed to parse AI response",
                     "confidence": 0.0
                 }
                 
         except Exception as e:
+            logger.error(f"AI analysis failed: {e}")
             return {"error": str(e), "success": False, "confidence": 0.0}
     
     def _extract_part_numbers_from_text(self, text):
@@ -190,21 +228,63 @@ class PartResolver:
         
         return unique_parts[:3]  # Return top 3 matches
     
-    def _select_best_result(self, web_result, ai_result):
-        """Select the best result based on confidence scores."""
-        web_confidence = web_result.get("confidence", 0.0) if web_result.get("success") else 0.0
-        ai_confidence = ai_result.get("confidence", 0.0) if ai_result.get("success") else 0.0
-        
-        if ai_confidence > web_confidence:
-            return ai_result
-        elif web_result.get("parts"):
-            return web_result["parts"][0]  # Return best web result
-        else:
+    def _select_best_result_v2(self, web_result, ai_result, description, make, model):
+        """Select the best result using improved logic that considers AI analysis of web data."""
+        # Priority 1: AI analysis that validated against web results
+        if (ai_result.get("success") and 
+            ai_result.get("validated_against_web") and 
+            ai_result.get("confidence", 0.0) > 0.7):
             return {
-                "oem_part_number": "NOT_FOUND",
-                "description": "Could not resolve part number",
-                "confidence": 0.0
+                "oem_part_number": ai_result["oem_part_number"],
+                "description": ai_result["description"],
+                "confidence": ai_result["confidence"],
+                "selection_metadata": {
+                    "selected_from": "ai_analysis_validated",
+                    "composite_score": ai_result["confidence"],
+                    "reasoning": ai_result.get("reasoning", "AI validated against web search")
+                }
             }
+        
+        # Priority 2: High-confidence web result with AI analysis
+        if (web_result.get("success") and web_result.get("parts") and
+            ai_result.get("success") and ai_result.get("confidence", 0.0) > 0.6):
+            best_web_part = web_result["parts"][0]
+            return {
+                "oem_part_number": ai_result["oem_part_number"],
+                "description": ai_result["description"],
+                "confidence": min(ai_result["confidence"], 0.9),  # Cap at 0.9 for mixed results
+                "selection_metadata": {
+                    "selected_from": "ai_analysis_with_web",
+                    "composite_score": (ai_result["confidence"] + best_web_part["confidence"]) / 2,
+                    "reasoning": ai_result.get("reasoning", "AI analysis based on web search")
+                }
+            }
+        
+        # Priority 3: Best web result if AI failed
+        if web_result.get("success") and web_result.get("parts"):
+            best_web_part = web_result["parts"][0]
+            return {
+                "oem_part_number": best_web_part["oem_part_number"],
+                "description": best_web_part["description"],
+                "confidence": best_web_part["confidence"],
+                "selection_metadata": {
+                    "selected_from": "web_search_only",
+                    "composite_score": best_web_part["confidence"],
+                    "reasoning": "Web search result without AI validation"
+                }
+            }
+        
+        # Fallback: No reliable results found
+        return {
+            "oem_part_number": "NOT_FOUND",
+            "description": f"Unable to resolve OEM part number for {description}",
+            "confidence": 0.0,
+            "selection_metadata": {
+                "selected_from": "fallback",
+                "composite_score": 0.0,
+                "reasoning": "No reliable results found from web search or AI analysis"
+            }
+        }
 
 # Standalone function wrapper for backwards compatibility
 def resolve_part_name(description, make=None, model=None, year=None, use_database=True, use_manual_search=True, use_web_search=True, save_results=True, bypass_cache=False):

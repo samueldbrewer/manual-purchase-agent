@@ -190,7 +190,7 @@ def demo_manual_process():
                 'make': make,
                 'model': model,
                 'processing_method': 'Direct PDF URL Processing with GPT-4.1-Nano',
-                'ai_model': 'gpt-4.1-mini-2025-04-14',
+                'ai_model': 'gpt-4.1-nano-2025-04-14',
                 'extraction_source': 'Real-time AI extraction from PDF text',
                 'manual_subject': extracted_info.get('manual_subject', 'Unknown'),
                 
