@@ -182,34 +182,44 @@ def extract_information(text, manual_id=None):
         
         # Initialize OpenAI client - work around Railway proxies issue
         try:
-            # Clear any existing configuration that might interfere
-            if hasattr(OpenAI, '_default_client'):
-                delattr(OpenAI, '_default_client')
+            # Try with httpx client to avoid proxies
+            import httpx
             
-            # Try with minimal parameters to avoid proxies issue
+            # Create httpx client with no proxies
+            http_client = httpx.Client(
+                proxies=None,
+                timeout=60.0
+            )
+            
             client = OpenAI(
                 api_key=openai_api_key,
+                http_client=http_client,
                 timeout=60.0,
                 max_retries=2
             )
-            logger.info("OpenAI client initialized successfully")
+            logger.info("OpenAI client initialized with httpx client")
         except Exception as init_error:
             logger.error(f"OpenAI client initialization failed: {init_error}")
-            # Try alternative approach with requests session override
+            # Final fallback - try to monkey patch the constructor
             try:
-                import requests
-                session = requests.Session()
-                # Remove any proxy configuration
-                session.proxies = {}
+                # Temporarily override environment to disable proxies
+                old_http_proxy = os.environ.pop('HTTP_PROXY', None)
+                old_https_proxy = os.environ.pop('HTTPS_PROXY', None)
+                old_no_proxy = os.environ.pop('NO_PROXY', None)
                 
-                client = OpenAI(
-                    api_key=openai_api_key,
-                    http_client=session,
-                    timeout=60.0
-                )
-                logger.info("OpenAI client initialized with custom HTTP client")
-            except Exception as alt_error:
-                logger.error(f"Alternative OpenAI initialization also failed: {alt_error}")
+                client = OpenAI(api_key=openai_api_key)
+                
+                # Restore environment
+                if old_http_proxy:
+                    os.environ['HTTP_PROXY'] = old_http_proxy
+                if old_https_proxy:
+                    os.environ['HTTPS_PROXY'] = old_https_proxy
+                if old_no_proxy:
+                    os.environ['NO_PROXY'] = old_no_proxy
+                    
+                logger.info("OpenAI client initialized by clearing proxy environment")
+            except Exception as final_error:
+                logger.error(f"All OpenAI initialization methods failed: {final_error}")
                 return {
                     'error_codes': [],
                     'part_numbers': [],
