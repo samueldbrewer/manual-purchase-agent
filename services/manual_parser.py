@@ -180,22 +180,44 @@ def extract_information(text, manual_id=None):
         
         logger.info(f"OpenAI API key found: {openai_api_key[:12]}... (length: {len(openai_api_key)})")
         
-        # Initialize OpenAI client - handle the proxies error by setting environment first
+        # Initialize OpenAI client - work around Railway proxies issue
         try:
-            # Set environment variable first to avoid proxies issues
-            os.environ['OPENAI_API_KEY'] = openai_api_key
-            client = OpenAI()
+            # Clear any existing configuration that might interfere
+            if hasattr(OpenAI, '_default_client'):
+                delattr(OpenAI, '_default_client')
+            
+            # Try with minimal parameters to avoid proxies issue
+            client = OpenAI(
+                api_key=openai_api_key,
+                timeout=60.0,
+                max_retries=2
+            )
             logger.info("OpenAI client initialized successfully")
         except Exception as init_error:
             logger.error(f"OpenAI client initialization failed: {init_error}")
-            return {
-                'error_codes': [],
-                'part_numbers': [],
-                'manual_subject': 'OpenAI initialization failed',
-                'common_problems': [],
-                'maintenance_procedures': [],
-                'safety_warnings': []
-            }
+            # Try alternative approach with requests session override
+            try:
+                import requests
+                session = requests.Session()
+                # Remove any proxy configuration
+                session.proxies = {}
+                
+                client = OpenAI(
+                    api_key=openai_api_key,
+                    http_client=session,
+                    timeout=60.0
+                )
+                logger.info("OpenAI client initialized with custom HTTP client")
+            except Exception as alt_error:
+                logger.error(f"Alternative OpenAI initialization also failed: {alt_error}")
+                return {
+                    'error_codes': [],
+                    'part_numbers': [],
+                    'manual_subject': 'OpenAI initialization failed',
+                    'common_problems': [],
+                    'maintenance_procedures': [],
+                    'safety_warnings': []
+                }
         
         # Limit text to prevent token overflow
         max_text_length = 100000  # ~25K tokens for GPT-4.1-Nano
