@@ -12,8 +12,6 @@ class ManualParser:
     
     def __init__(self, openai_api_key=None):
         self.openai_api_key = openai_api_key or os.environ.get('OPENAI_API_KEY')
-        if self.openai_api_key:
-            openai.api_key = self.openai_api_key
     
     def extract_text_from_pdf(self, pdf_path):
         """Extract text from PDF file."""
