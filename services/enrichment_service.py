@@ -151,25 +151,37 @@ class EnrichmentService:
             return None
     
     def get_enrichment_data(self, make, model, year=None, part_number=None):
-        """Get enrichment data for equipment or parts."""
+        """Get enrichment data for equipment or parts with optimized search queries."""
         try:
-            # Build search query
-            if part_number:
-                query = f"{make} {model} {part_number}"
-                subject = f"{make} {model} part {part_number}"
-            else:
-                query = f"{make} {model} {year if year else ''} equipment manual parts"
-                subject = f"{make} {model} {year if year else ''}"
+            # Build base equipment identifier
+            equipment = f"{make} {model}"
+            if year:
+                equipment = f"{make} {model} {year}"
             
-            # Search for multimedia content
-            videos = self._search_videos(query)
-            articles = self._search_articles(query) 
-            images = self._search_images(query)
+            # Create search context
+            if part_number:
+                subject = f"{equipment} part {part_number}"
+                context = {
+                    "equipment": equipment,
+                    "part_number": part_number,
+                    "search_type": "part_specific"
+                }
+            else:
+                subject = equipment
+                context = {
+                    "equipment": equipment,
+                    "search_type": "equipment_general"
+                }
+            
+            # Search for multimedia content with optimized queries
+            videos = self._search_videos(context)
+            articles = self._search_articles(context) 
+            images = self._search_images(context)
             
             return {
                 "success": True,
-                "query": query,
                 "subject": subject,
+                "context": context,
                 "data": {
                     "videos": videos,
                     "articles": articles,
@@ -189,17 +201,25 @@ class EnrichmentService:
                 }
             }
     
-    def _search_videos(self, query):
-        """Search for related videos."""
+    def _search_videos(self, context):
+        """Search for related videos with optimized queries."""
         try:
             if not self.serpapi_key:
                 return []
             
+            # Build video-specific query
+            if context["search_type"] == "part_specific":
+                # For parts: focus on installation, replacement, repair
+                query = f"{context['equipment']} {context['part_number']} install replacement repair"
+            else:
+                # For equipment: focus on operation, maintenance, repair
+                query = f"{context['equipment']} operation maintenance repair tutorial"
+            
             search = GoogleSearch({
-                "q": f"{query} video tutorial",
+                "q": query,
                 "tbm": "vid",
                 "api_key": self.serpapi_key,
-                "num": 5
+                "num": 8
             })
             
             results = search.get_dict()
@@ -211,7 +231,8 @@ class EnrichmentService:
                     "url": result.get("link", ""),
                     "thumbnail": result.get("thumbnail", ""),
                     "duration": result.get("duration", ""),
-                    "source": result.get("source", "")
+                    "source": result.get("source", ""),
+                    "query_used": query
                 })
             
             return videos
@@ -220,28 +241,52 @@ class EnrichmentService:
             logger.error(f"Error searching videos: {e}")
             return []
     
-    def _search_articles(self, query):
-        """Search for related articles and documentation."""
+    def _search_articles(self, context):
+        """Search for related articles and documentation with optimized queries."""
         try:
             if not self.serpapi_key:
                 return []
             
+            # Build documentation-specific query
+            if context["search_type"] == "part_specific":
+                # For parts: focus on technical specs, manuals, part lists
+                query = f"{context['equipment']} {context['part_number']} manual technical specifications parts list"
+            else:
+                # For equipment: focus on operation manuals, service guides, technical docs
+                query = f"{context['equipment']} manual service guide technical documentation"
+            
             search = GoogleSearch({
-                "q": f"{query} manual documentation",
+                "q": query,
                 "api_key": self.serpapi_key,
-                "num": 5
+                "num": 8,
+                "hl": "en"
             })
             
             results = search.get_dict()
             articles = []
             
             for result in results.get("organic_results", []):
+                # Prioritize official documentation sources
+                url = result.get("link", "")
+                title = result.get("title", "")
+                
+                # Check if it's likely to be official documentation
+                is_official = any(domain in url.lower() for domain in [
+                    'hobart.com', 'hennypenny.com', 'vulcanhart.com', 
+                    'carrier.com', 'trane.com', 'manitowoc.com'
+                ])
+                
                 articles.append({
-                    "title": result.get("title", ""),
-                    "url": result.get("link", ""),
+                    "title": title,
+                    "url": url,
                     "snippet": result.get("snippet", ""),
-                    "source": result.get("displayed_link", "")
+                    "source": result.get("displayed_link", ""),
+                    "is_official": is_official,
+                    "query_used": query
                 })
+            
+            # Sort to prioritize official sources
+            articles.sort(key=lambda x: x['is_official'], reverse=True)
             
             return articles
             
@@ -249,31 +294,56 @@ class EnrichmentService:
             logger.error(f"Error searching articles: {e}")
             return []
     
-    def _search_images(self, query):
-        """Search for related images."""
+    def _search_images(self, context):
+        """Search for related images with optimized queries."""
         try:
             if not self.serpapi_key:
                 return []
             
+            # Build image-specific query
+            if context["search_type"] == "part_specific":
+                # For parts: focus on part diagrams, installation photos, part identification
+                query = f"{context['equipment']} {context['part_number']} part diagram installation photo"
+            else:
+                # For equipment: focus on equipment photos, parts diagrams, schematics
+                query = f"{context['equipment']} parts diagram schematic exploded view"
+            
             search = GoogleSearch({
-                "q": f"{query} parts diagram",
+                "q": query,
                 "tbm": "isch",
                 "api_key": self.serpapi_key,
-                "num": 5
+                "num": 10,
+                "safe": "active"
             })
             
             results = search.get_dict()
             images = []
             
             for result in results.get("images_results", []):
+                # Filter for likely useful images (not too small, from relevant sources)
+                original_url = result.get("original", "")
+                thumbnail_url = result.get("thumbnail", "")
+                
+                # Check if source is likely to be relevant
+                source_url = result.get("source", "").lower()
+                is_relevant_source = any(domain in source_url for domain in [
+                    'partstown', 'hobart', 'hennypenny', 'vulcanhart', 'manitowoc',
+                    'repairparts', 'partsips', 'genuineparts', 'oem'
+                ])
+                
                 images.append({
                     "title": result.get("title", ""),
-                    "url": result.get("original", ""),
-                    "thumbnail": result.get("thumbnail", ""),
-                    "source": result.get("source", "")
+                    "url": original_url,
+                    "thumbnail": thumbnail_url,
+                    "source": result.get("source", ""),
+                    "is_relevant_source": is_relevant_source,
+                    "query_used": query
                 })
             
-            return images
+            # Sort to prioritize relevant sources
+            images.sort(key=lambda x: x['is_relevant_source'], reverse=True)
+            
+            return images[:8]  # Return top 8 images
             
         except Exception as e:
             logger.error(f"Error searching images: {e}")
