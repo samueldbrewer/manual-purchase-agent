@@ -209,11 +209,9 @@ class EnrichmentService:
             
             # Build video-specific query
             if context["search_type"] == "part_specific":
-                # For parts: focus on installation, replacement, repair
-                query = f"{context['equipment']} {context['part_number']} install replacement repair"
+                query = f"{context['equipment']} {context['part_number']} video"
             else:
-                # For equipment: focus on operation, maintenance, repair
-                query = f"{context['equipment']} operation maintenance repair tutorial"
+                query = f"{context['equipment']} video"
             
             search = GoogleSearch({
                 "q": query,
@@ -249,11 +247,9 @@ class EnrichmentService:
             
             # Build documentation-specific query
             if context["search_type"] == "part_specific":
-                # For parts: focus on technical specs, manuals, part lists
-                query = f"{context['equipment']} {context['part_number']} manual technical specifications parts list"
+                query = f"{context['equipment']} {context['part_number']} manual documentation"
             else:
-                # For equipment: focus on operation manuals, service guides, technical docs
-                query = f"{context['equipment']} manual service guide technical documentation"
+                query = f"{context['equipment']} manual documentation"
             
             search = GoogleSearch({
                 "q": query,
@@ -302,11 +298,9 @@ class EnrichmentService:
             
             # Build image-specific query
             if context["search_type"] == "part_specific":
-                # For parts: focus on part diagrams, installation photos, part identification
-                query = f"{context['equipment']} {context['part_number']} part diagram installation photo"
+                query = f"{context['equipment']} {context['part_number']} image"
             else:
-                # For equipment: focus on equipment photos, parts diagrams, schematics
-                query = f"{context['equipment']} parts diagram schematic exploded view"
+                query = f"{context['equipment']} image"
             
             search = GoogleSearch({
                 "q": query,
