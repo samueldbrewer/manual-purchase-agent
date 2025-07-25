@@ -180,54 +180,20 @@ def extract_information(text, manual_id=None):
         
         logger.info(f"OpenAI API key found: {openai_api_key[:12]}... (length: {len(openai_api_key)})")
         
-        # Initialize OpenAI client - work around Railway proxies issue
+        # Initialize OpenAI client (fixed with compatible library versions)
         try:
-            # Try with httpx client to avoid proxies
-            import httpx
-            
-            # Create httpx client with no proxies
-            http_client = httpx.Client(
-                proxies=None,
-                timeout=60.0
-            )
-            
-            client = OpenAI(
-                api_key=openai_api_key,
-                http_client=http_client,
-                timeout=60.0,
-                max_retries=2
-            )
-            logger.info("OpenAI client initialized with httpx client")
+            client = OpenAI(api_key=openai_api_key)
+            logger.info("OpenAI client initialized successfully")
         except Exception as init_error:
             logger.error(f"OpenAI client initialization failed: {init_error}")
-            # Final fallback - try to monkey patch the constructor
-            try:
-                # Temporarily override environment to disable proxies
-                old_http_proxy = os.environ.pop('HTTP_PROXY', None)
-                old_https_proxy = os.environ.pop('HTTPS_PROXY', None)
-                old_no_proxy = os.environ.pop('NO_PROXY', None)
-                
-                client = OpenAI(api_key=openai_api_key)
-                
-                # Restore environment
-                if old_http_proxy:
-                    os.environ['HTTP_PROXY'] = old_http_proxy
-                if old_https_proxy:
-                    os.environ['HTTPS_PROXY'] = old_https_proxy
-                if old_no_proxy:
-                    os.environ['NO_PROXY'] = old_no_proxy
-                    
-                logger.info("OpenAI client initialized by clearing proxy environment")
-            except Exception as final_error:
-                logger.error(f"All OpenAI initialization methods failed: {final_error}")
-                return {
-                    'error_codes': [],
-                    'part_numbers': [],
-                    'manual_subject': 'OpenAI initialization failed',
-                    'common_problems': [],
-                    'maintenance_procedures': [],
-                    'safety_warnings': []
-                }
+            return {
+                'error_codes': [],
+                'part_numbers': [],
+                'manual_subject': 'OpenAI initialization failed',
+                'common_problems': [],
+                'maintenance_procedures': [],
+                'safety_warnings': []
+            }
         
         # Limit text to prevent token overflow
         max_text_length = 100000  # ~25K tokens for GPT-4.1-Nano
