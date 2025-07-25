@@ -180,7 +180,14 @@ def extract_information(text, manual_id=None):
         
         logger.info(f"OpenAI API key found: {openai_api_key[:12]}... (length: {len(openai_api_key)})")
         
-        client = OpenAI(api_key=openai_api_key)
+        try:
+            client = OpenAI(api_key=openai_api_key)
+        except TypeError as init_error:
+            logger.error(f"OpenAI client initialization failed with api_key: {init_error}")
+            # Try alternative initialization without explicit api_key parameter
+            import os
+            os.environ['OPENAI_API_KEY'] = openai_api_key
+            client = OpenAI()
         
         # Limit text to prevent token overflow
         max_text_length = 100000  # ~25K tokens for GPT-4.1-Nano
